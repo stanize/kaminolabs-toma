@@ -266,3 +266,106 @@ h1{ font-size:26px; font-weight:600; margin:0; letter-spacing:.01em; }
   line-height:1.5;
 }
 .setup-note code{ color:var(--pp); }
+
+/* countdown card */
+.countdown{
+  width:100%;
+  text-align:left;
+  border:none;
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin: 4px 0 18px;
+  background: linear-gradient(135deg, #2c2049, #241c3d);
+  border: 1px solid #3d2f5c;
+  color: var(--ink);
+  cursor:pointer;
+  font-family: inherit;
+}
+.countdown-label{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: var(--ink-dim);
+}
+.countdown-time{
+  font-size:34px;
+  font-weight:600;
+  margin-top:4px;
+  font-variant-numeric: tabular-nums;
+}
+.countdown-time.overdue{ color:#e08a9b; }
+.countdown-sub{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:12px;
+  color: var(--ink-dim);
+  margin-top:2px;
+}
+
+.grid-2{ grid-template-columns: 1fr 1fr; }
+.grid-1{ grid-template-columns: 1fr; margin-top:-8px; }
+.grid-1 .btn-track{ min-height:76px; flex-direction:row; align-items:center; gap:14px; }
+.grid-1 .btn-track .label{ margin-top:0; }
+.grid-1 .btn-track > div{ display:flex; flex-direction:column; }
+
+.btn-bi{ background: #2a2338; border: 1px solid #423a5c; }
+.btn-bi .glyph, .btn-bi .label{ color: #b79ce8; }
+
+.btn-report{
+  margin-top: 16px;
+  width:100%;
+  border:none;
+  border-radius:14px;
+  padding:14px;
+  background: var(--card);
+  border:1px solid var(--line);
+  color: var(--ink);
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+}
+.btn-report:active{ transform: scale(0.98); }
+
+select#reportRange{
+  width:100%;
+  background: var(--bg-1);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding: 12px 12px;
+  color: var(--ink);
+  font-size:15px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  outline:none;
+  appearance:none;
+  -webkit-appearance:none;
+}
+
+.report-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+.report-cell{
+  background: var(--bg-1);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding: 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.report-cell .tag{
+  width:34px; height:34px;
+  border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+  flex-shrink:0;
+}
+.report-cell .count{ font-size:20px; font-weight:600; line-height:1; }
+.report-cell .label{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:11px;
+  color: var(--ink-dim);
+  margin-top:2px;
+}

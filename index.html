@@ -19,7 +19,27 @@
 
   <div id="setupNote"></div>
 
-  <div class="grid">
+  <button class="countdown" id="countdownCard">
+    <div class="countdown-label" id="countdownLabel">Próxima toma</div>
+    <div class="countdown-time" id="countdownTime">—</div>
+    <div class="countdown-sub" id="countdownSub">Registra una toma para empezar</div>
+  </button>
+
+  <div class="grid grid-2">
+    <button class="btn-track btn-to" data-type="to">
+      <span class="glyph">🤱</span>
+      <div>
+        <div class="label">Toma</div>
+        <div class="sub" id="lastTo">Sin registros</div>
+      </div>
+    </button>
+    <button class="btn-track btn-bi" data-type="bi">
+      <span class="glyph">🍼</span>
+      <div>
+        <div class="label">Biberón</div>
+        <div class="sub" id="lastBi">Sin registros</div>
+      </div>
+    </button>
     <button class="btn-track btn-pp" data-type="pp">
       <span class="glyph">💧</span>
       <div>
@@ -34,13 +54,8 @@
         <div class="sub" id="lastKa">Sin registros</div>
       </div>
     </button>
-    <button class="btn-track btn-to" data-type="to">
-      <span class="glyph">🤱</span>
-      <div>
-        <div class="label">Toma</div>
-        <div class="sub" id="lastTo">Sin registros</div>
-      </div>
-    </button>
+  </div>
+  <div class="grid grid-1">
     <button class="btn-track btn-ba" data-type="ba">
       <span class="glyph">🛁</span>
       <div>
@@ -56,6 +71,57 @@
   </div>
   <div class="log" id="log"></div>
 
+  <button class="btn-report" id="btnReport">Ver informe</button>
+
+</div>
+
+<div class="overlay" id="reportOverlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="tag" style="background:#241c3d;color:#e9e4f0;">📊</span>
+      <div>
+        <h2>Informe</h2>
+        <p id="reportRangeLabel">Hoy</p>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:18px;">
+      <label>Rango</label>
+      <select id="reportRange">
+        <option value="today">Hoy</option>
+        <option value="yesterday">Ayer</option>
+        <option value="7d">Últimos 7 días</option>
+        <option value="30d">Últimos 30 días</option>
+        <option value="all">Todo</option>
+      </select>
+    </div>
+
+    <div class="report-grid" id="reportGrid"></div>
+
+    <div class="actions" style="margin-top:18px;">
+      <button class="btn btn-cancel" id="btnReportClose">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="intervalOverlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="tag" style="background:#3a222a;color:#e08a9b;">⏱</span>
+      <div>
+        <h2>Intervalo entre tomas</h2>
+        <p>Usado para calcular la cuenta regresiva</p>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:18px;">
+      <label>Horas</label>
+      <input type="number" id="intervalInput" min="1" max="12" step="0.5" />
+    </div>
+    <div class="actions">
+      <button class="btn btn-cancel" id="btnIntervalCancel">Cancelar</button>
+      <button class="btn btn-confirm" id="btnIntervalSave">Guardar</button>
+    </div>
+  </div>
 </div>
 
 <div class="overlay" id="overlay">

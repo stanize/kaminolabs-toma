@@ -3,10 +3,18 @@
 
 create table if not exists toma_events (
   id uuid primary key default gen_random_uuid(),
-  type text not null check (type in ('pp', 'ka', 'to', 'ba')),
+  type text not null check (type in ('pp', 'ka', 'to', 'ba', 'bi')),
   occurred_at timestamptz not null,
   created_at timestamptz not null default now()
 );
+
+-- If toma_events already exists from an earlier version of this schema
+-- (without 'bi' for biberón), run this migration instead of the create
+-- table above:
+--
+--   alter table toma_events drop constraint toma_events_type_check;
+--   alter table toma_events add constraint toma_events_type_check
+--     check (type in ('pp', 'ka', 'to', 'ba', 'bi'));
 
 create index if not exists toma_events_occurred_at_idx
   on toma_events (occurred_at desc);

@@ -13,11 +13,17 @@ const TABLE = "toma_events";
 const HAS_SUPABASE = SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
 
 const TYPES = {
+  to: { label: "Toma", glyph: "🤱", color: "#e08a9b", soft: "#3a222a" },
+  bi: { label: "Biberón", glyph: "🍼", color: "#b79ce8", soft: "#2a2338" },
   pp: { label: "Pipí", glyph: "💧", color: "#e8b45c", soft: "#3a2f22" },
   ka: { label: "Popó", glyph: "💩", color: "#a97c5a", soft: "#34291f" },
-  to: { label: "Toma", glyph: "🤱", color: "#e08a9b", soft: "#3a222a" },
   ba: { label: "Baño", glyph: "🛁", color: "#6fb8b0", soft: "#1e332f" },
 };
+
+// Types that count toward the "next feeding" countdown
+const FEED_TYPES = ["to", "bi"];
+const INTERVAL_KEY_DEFAULT = 3; // hours, in-memory only (no localStorage)
+let feedIntervalHours = INTERVAL_KEY_DEFAULT;
 
 let events = [];
 let editingId = null;
@@ -83,6 +89,41 @@ function renderLastByType(){
   });
 }
 
+function renderCountdown(){
+  const feeds = events.filter(e => FEED_TYPES.includes(e.type))
+    .sort((a,b)=> new Date(b.occurred_at)-new Date(a.occurred_at));
+  const timeEl = $("#countdownTime");
+  const subEl = $("#countdownSub");
+  const labelEl = $("#countdownLabel");
+
+  if (feeds.length === 0){
+    timeEl.textContent = "—";
+    timeEl.classList.remove("overdue");
+    subEl.textContent = "Registra una toma o biberón para empezar";
+    labelEl.textContent = "Próxima toma";
+    return;
+  }
+
+  const last = new Date(feeds[0].occurred_at);
+  const next = new Date(last.getTime() + feedIntervalHours * 3600000);
+  const now = new Date();
+  const diffMs = next - now;
+  labelEl.textContent = "Próxima toma";
+
+  if (diffMs <= 0){
+    const overdueMin = Math.round(-diffMs/60000);
+    timeEl.textContent = overdueMin < 60 ? `+${overdueMin} min` : `+${Math.floor(overdueMin/60)}h ${overdueMin%60}m`;
+    timeEl.classList.add("overdue");
+    subEl.textContent = `Toca ya · cada ${feedIntervalHours}h · toca para ajustar`;
+  } else {
+    const mins = Math.round(diffMs/60000);
+    const h = Math.floor(mins/60), m = mins%60;
+    timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m} min`;
+    timeEl.classList.remove("overdue");
+    subEl.textContent = `Cada ${feedIntervalHours}h · toca para ajustar`;
+  }
+}
+
 function renderLog(){
   const log = $("#log");
   const sorted = [...events].sort((a,b)=> new Date(b.occurred_at)-new Date(a.occurred_at));
@@ -90,7 +131,7 @@ function renderLog(){
     log.innerHTML = `<div class="empty">Aún no hay registros.<br/>Toca un botón de arriba para empezar.</div>`;
     return;
   }
-  log.innerHTML = sorted.slice(0, 60).map(e => {
+  log.innerHTML = sorted.slice(0, 5).map(e => {
     const meta = TYPES[e.type];
     return `<div class="entry" data-id="${e.id}">
       <span class="tag" style="background:${meta.soft};color:${meta.color}">${meta.glyph}</span>
@@ -107,7 +148,7 @@ function renderLog(){
   });
 }
 
-function renderAll(){ renderLastByType(); renderLog(); }
+function renderAll(){ renderLastByType(); renderLog(); renderCountdown(); }
 
 function openSheetForNew(type){
   editingId = null;
@@ -192,6 +233,88 @@ $("#btnDelete").addEventListener('click', async () => {
   closeSheet();
   renderAll();
 });
+
+/* ---------- interval editor ---------- */
+
+const intervalOverlay = $("#intervalOverlay");
+
+$("#countdownCard").addEventListener('click', () => {
+  $("#intervalInput").value = feedIntervalHours;
+  intervalOverlay.classList.add("show");
+});
+$("#btnIntervalCancel").addEventListener('click', () => intervalOverlay.classList.remove("show"));
+intervalOverlay.addEventListener('click', (e) => { if (e.target === intervalOverlay) intervalOverlay.classList.remove("show"); });
+$("#btnIntervalSave").addEventListener('click', () => {
+  const v = parseFloat($("#intervalInput").value);
+  if (!isNaN(v) && v > 0){
+    feedIntervalHours = v;
+    renderCountdown();
+    showToast("Intervalo actualizado");
+  }
+  intervalOverlay.classList.remove("show");
+});
+
+/* ---------- report ---------- */
+
+const reportOverlay = $("#reportOverlay");
+const RANGE_LABELS = {
+  today: "Hoy",
+  yesterday: "Ayer",
+  "7d": "Últimos 7 días",
+  "30d": "Últimos 30 días",
+  all: "Todo"
+};
+
+function rangeStartEnd(rangeKey){
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (rangeKey === "today"){
+    return [startOfToday, new Date(startOfToday.getTime() + 86400000)];
+  }
+  if (rangeKey === "yesterday"){
+    const start = new Date(startOfToday.getTime() - 86400000);
+    return [start, startOfToday];
+  }
+  if (rangeKey === "7d"){
+    return [new Date(now.getTime() - 7*86400000), now];
+  }
+  if (rangeKey === "30d"){
+    return [new Date(now.getTime() - 30*86400000), now];
+  }
+  return [new Date(0), new Date(8640000000000000)]; // all
+}
+
+function renderReport(rangeKey){
+  const [start, end] = rangeStartEnd(rangeKey);
+  $("#reportRangeLabel").textContent = RANGE_LABELS[rangeKey];
+
+  const counts = {};
+  Object.keys(TYPES).forEach(t => counts[t] = 0);
+  events.forEach(e => {
+    const t = new Date(e.occurred_at);
+    if (t >= start && t < end) counts[e.type] = (counts[e.type] || 0) + 1;
+  });
+
+  const grid = $("#reportGrid");
+  grid.innerHTML = Object.keys(TYPES).map(t => {
+    const meta = TYPES[t];
+    return `<div class="report-cell">
+      <span class="tag" style="background:${meta.soft};color:${meta.color}">${meta.glyph}</span>
+      <div>
+        <div class="count">${counts[t]}</div>
+        <div class="label">${meta.label}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+$("#btnReport").addEventListener('click', () => {
+  renderReport($("#reportRange").value);
+  reportOverlay.classList.add("show");
+});
+$("#btnReportClose").addEventListener('click', () => reportOverlay.classList.remove("show"));
+reportOverlay.addEventListener('click', (e) => { if (e.target === reportOverlay) reportOverlay.classList.remove("show"); });
+$("#reportRange").addEventListener('change', (e) => renderReport(e.target.value));
 
 async function sbRequest(path, options = {}){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
