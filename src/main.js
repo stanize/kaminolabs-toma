@@ -296,12 +296,14 @@ function openTimerForNew(type){
   $("#timerStartFields").style.display = "flex";
   $("#timerManualDurationRow").style.display = "none";
   $("#timerDisplay").style.display = "none";
+  $("#timerReviewRow").style.display = "none";
   $("#timerNotesRow").style.display = "block";
   $("#btnTimerManualToggle").style.display = "block";
   $("#btnTimerManualToggle").textContent = "Ya terminó · añadir duración manualmente";
   $("#btnTimerStart").style.display = "block";
   $("#btnTimerStart").textContent = "Iniciar";
   $("#btnTimerStop").style.display = "none";
+  $("#btnTimerSaveReview").style.display = "none";
   $("#btnTimerCancel").textContent = "Cancelar";
   $("#tNotes").value = "";
   $("#tManualDuration").value = "";
@@ -365,12 +367,29 @@ $("#btnTimerStart").addEventListener('click', async () => {
   timerState.tickId = setInterval(tickTimer, 1000);
 });
 
-$("#btnTimerStop").addEventListener('click', async () => {
+$("#btnTimerStop").addEventListener('click', () => {
   if (!timerState) return;
   clearInterval(timerState.tickId);
-  const startDate = timerState.startDate;
+  const durationSeconds = Math.max(0, Math.round((Date.now() - timerState.startDate.getTime())/1000));
+  timerState.finalDurationSeconds = durationSeconds;
+
+  $("#timerSub").textContent = "Revisa la duración antes de guardar";
+  $("#timerClock").textContent = fmtClock(durationSeconds);
+  $("#timerReviewRow").style.display = "block";
+  $("#tReviewDuration").value = Math.round(durationSeconds/60);
+  $("#btnTimerStop").style.display = "none";
+  $("#btnTimerSaveReview").style.display = "block";
+  $("#btnTimerCancel").textContent = "Descartar";
+});
+
+$("#btnTimerSaveReview").addEventListener('click', async () => {
+  if (!timerState) return;
+  const mins = parseFloat($("#tReviewDuration").value);
+  const durationSeconds = (!isNaN(mins) && mins >= 0)
+    ? Math.round(mins * 60)
+    : timerState.finalDurationSeconds;
   const type = timerState.type;
-  const durationSeconds = Math.max(0, Math.round((Date.now() - startDate.getTime())/1000));
+  const startDate = timerState.startDate;
   const notes = $("#tNotes").value.trim();
 
   await createEvent(type, startDate.toISOString(), notes, durationSeconds);

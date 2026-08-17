@@ -205,6 +205,11 @@
       <div class="timer-started-at" id="timerStartedAt"></div>
     </div>
 
+    <div class="field" id="timerReviewRow" style="margin-bottom:14px; display:none;">
+      <label>Duración (minutos) · ajustar si hace falta</label>
+      <input type="number" id="tReviewDuration" min="0" step="1" />
+    </div>
+
     <div class="field" id="timerNotesRow" style="margin-bottom:18px; display:none;">
       <label>Notas (opcional)</label>
       <textarea id="tNotes" rows="2" placeholder="Ej. mucha cantidad, se despertó llorando…"></textarea>
@@ -214,6 +219,7 @@
       <button class="btn btn-cancel" id="btnTimerCancel">Cancelar</button>
       <button class="btn btn-confirm" id="btnTimerStart">Iniciar</button>
       <button class="btn btn-stop" id="btnTimerStop" style="display:none;">Detener</button>
+      <button class="btn btn-confirm" id="btnTimerSaveReview" style="display:none;">Guardar</button>
     </div>
   </div>
 </div>
