@@ -6,7 +6,9 @@ the sheet, done.
 
 ## Setup
 
-1. In Supabase, run `schema.sql` in the SQL editor (creates `toma_events`,
+1. In Supabase, run `supabase/schema.sql` in the SQL editor (creates `toma_events`,
+   and see `supabase/schema_02.sql` for the biberón migration if upgrading an
+   existing table),
    optionally `toma_profile`, with RLS policies).
 2. In Vercel, set environment variables on the project:
    - `VITE_SUPABASE_URL`
@@ -14,4 +16,4 @@ the sheet, done.
 3. Deploy. `npm install && npm run build` outputs static files to `dist/`.
 
 The Supabase anon key is safe to expose client-side — access control comes
-from the RLS policies in `schema.sql`, not from hiding the key.
+from the RLS policies in `supabase/schema.sql`, not from hiding the key.
