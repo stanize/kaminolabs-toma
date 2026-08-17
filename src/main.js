@@ -260,9 +260,10 @@ const reportOverlay = $("#reportOverlay");
 const RANGE_LABELS = {
   today: "Hoy",
   yesterday: "Ayer",
-  "7d": "Últimos 7 días",
-  "30d": "Últimos 30 días",
-  all: "Todo"
+  "6h": "Últimas 6 horas",
+  "12h": "Últimas 12 horas",
+  "24h": "Últimas 24 horas",
+  all: "Informe completo"
 };
 
 function rangeStartEnd(rangeKey){
@@ -275,11 +276,14 @@ function rangeStartEnd(rangeKey){
     const start = new Date(startOfToday.getTime() - 86400000);
     return [start, startOfToday];
   }
-  if (rangeKey === "7d"){
-    return [new Date(now.getTime() - 7*86400000), now];
+  if (rangeKey === "6h"){
+    return [new Date(now.getTime() - 6*3600000), now];
   }
-  if (rangeKey === "30d"){
-    return [new Date(now.getTime() - 30*86400000), now];
+  if (rangeKey === "12h"){
+    return [new Date(now.getTime() - 12*3600000), now];
+  }
+  if (rangeKey === "24h"){
+    return [new Date(now.getTime() - 24*3600000), now];
   }
   return [new Date(0), new Date(8640000000000000)]; // all
 }
