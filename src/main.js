@@ -99,6 +99,7 @@ function renderCountdown(){
   if (feeds.length === 0){
     timeEl.textContent = "—";
     timeEl.classList.remove("overdue");
+    $("#countdownCard").classList.remove("overdue-alert");
     subEl.textContent = "Registra una toma o biberón para empezar";
     labelEl.textContent = "Próxima toma";
     return;
@@ -114,12 +115,14 @@ function renderCountdown(){
     const overdueMin = Math.round(-diffMs/60000);
     timeEl.textContent = overdueMin < 60 ? `+${overdueMin} min` : `+${Math.floor(overdueMin/60)}h ${overdueMin%60}m`;
     timeEl.classList.add("overdue");
+    $("#countdownCard").classList.add("overdue-alert");
     subEl.textContent = `Toca ya · cada ${feedIntervalHours}h · toca para ajustar`;
   } else {
     const mins = Math.round(diffMs/60000);
     const h = Math.floor(mins/60), m = mins%60;
     timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m} min`;
     timeEl.classList.remove("overdue");
+    $("#countdownCard").classList.remove("overdue-alert");
     subEl.textContent = `Cada ${feedIntervalHours}h · toca para ajustar`;
   }
 }

@@ -395,3 +395,18 @@ select#reportRange{
   text-overflow:ellipsis;
   white-space:nowrap;
 }
+
+/* overdue feeding alert */
+.countdown.overdue-alert{
+  animation: overdue-flash 1.4s ease-in-out infinite;
+}
+@keyframes overdue-flash{
+  0%, 100% {
+    background: linear-gradient(135deg, #2c2049, #241c3d);
+    border-color: #3d2f5c;
+  }
+  50% {
+    background: linear-gradient(135deg, #4a2230, #3a1c28);
+    border-color: #e08a9b;
+  }
+}
