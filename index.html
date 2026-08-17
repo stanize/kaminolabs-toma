@@ -146,6 +146,11 @@
       </div>
     </div>
 
+    <div class="field" id="fDurationRow" style="margin-bottom:14px; display:none;">
+      <label>Duración (minutos)</label>
+      <input type="number" id="fDuration" min="0" step="1" />
+    </div>
+
     <div class="quick-row">
       <span class="quick" data-mins="0">Ahora</span>
       <span class="quick" data-mins="-10">Hace 10 min</span>
@@ -164,6 +169,45 @@
       <button class="btn btn-confirm" id="btnConfirm">Confirmar</button>
     </div>
     <button class="btn-delete" id="btnDelete" style="display:none;">Eliminar registro</button>
+  </div>
+</div>
+
+<div class="overlay" id="timerOverlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="tag" id="timerTag"></span>
+      <div>
+        <h2 id="timerTitle"></h2>
+        <p id="timerSub">Elige la hora de inicio</p>
+      </div>
+    </div>
+
+    <div class="field-row" id="timerStartFields">
+      <div class="field">
+        <label>Fecha de inicio</label>
+        <input type="date" id="tStartDate" />
+      </div>
+      <div class="field">
+        <label>Hora de inicio</label>
+        <input type="time" id="tStartTime" />
+      </div>
+    </div>
+
+    <div class="timer-display" id="timerDisplay" style="display:none;">
+      <div class="timer-clock" id="timerClock">00:00</div>
+      <div class="timer-started-at" id="timerStartedAt"></div>
+    </div>
+
+    <div class="field" id="timerNotesRow" style="margin-bottom:18px; display:none;">
+      <label>Notas (opcional)</label>
+      <textarea id="tNotes" rows="2" placeholder="Ej. mucha cantidad, se despertó llorando…"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-cancel" id="btnTimerCancel">Cancelar</button>
+      <button class="btn btn-confirm" id="btnTimerStart">Iniciar</button>
+      <button class="btn btn-stop" id="btnTimerStop" style="display:none;">Detener</button>
+    </div>
   </div>
 </div>
 

@@ -137,11 +137,12 @@ function renderLog(){
   log.innerHTML = sorted.slice(0, 5).map(e => {
     const meta = TYPES[e.type];
     const noteHtml = e.notes ? `<div class="n">${escapeHtml(e.notes)}</div>` : "";
+    const durationHtml = e.duration_seconds ? ` · ${fmtClock(e.duration_seconds)}` : "";
     return `<div class="entry" data-id="${e.id}">
       <span class="tag" style="background:${meta.soft};color:${meta.color}">${meta.glyph}</span>
       <div class="info">
         <div class="t">${meta.label}</div>
-        <div class="d">${fmtEntryDate(e.occurred_at)}</div>
+        <div class="d">${fmtEntryDate(e.occurred_at)}${durationHtml}</div>
         ${noteHtml}
       </div>
       <div class="ago">${relTime(e.occurred_at)}</div>
@@ -171,6 +172,7 @@ function openSheetForNew(type){
   $("#sheetTitle").textContent = meta.label;
   $("#sheetSub").textContent = "Ajusta la fecha y hora si hace falta";
   $("#btnDelete").style.display = "none";
+  $("#fDurationRow").style.display = "none";
   const now = new Date();
   const parts = toLocalInputParts(now);
   $("#fDate").value = parts.date;
@@ -195,6 +197,12 @@ function openSheetForEdit(id){
   $("#fDate").value = parts.date;
   $("#fTime").value = parts.time;
   $("#fNotes").value = e.notes || "";
+  if (FEED_TYPES.includes(e.type)){
+    $("#fDurationRow").style.display = "block";
+    $("#fDuration").value = e.duration_seconds ? Math.round(e.duration_seconds/60) : "";
+  } else {
+    $("#fDurationRow").style.display = "none";
+  }
   overlay.classList.add("show");
 }
 
@@ -205,7 +213,14 @@ function closeSheet(){
 }
 
 document.querySelectorAll('.btn-track').forEach(btn => {
-  btn.addEventListener('click', () => openSheetForNew(btn.dataset.type));
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.type;
+    if (FEED_TYPES.includes(type)){
+      openTimerForNew(type);
+    } else {
+      openSheetForNew(type);
+    }
+  });
 });
 
 $("#btnCancel").addEventListener('click', closeSheet);
@@ -228,9 +243,14 @@ $("#btnConfirm").addEventListener('click', async () => {
   const occurred = fromLocalInputParts(dateStr, timeStr);
   const iso = occurred.toISOString();
   const notes = $("#fNotes").value.trim();
+  let durationSeconds = null;
+  if (editingId && FEED_TYPES.includes(pendingType)){
+    const mins = parseFloat($("#fDuration").value);
+    durationSeconds = (!isNaN(mins) && mins >= 0) ? Math.round(mins * 60) : null;
+  }
 
   if (editingId){
-    await updateEvent(editingId, iso, notes);
+    await updateEvent(editingId, iso, notes, durationSeconds);
     showToast("Registro actualizado");
   } else {
     await createEvent(pendingType, iso, notes);
@@ -246,6 +266,97 @@ $("#btnDelete").addEventListener('click', async () => {
   showToast("Registro eliminado");
   closeSheet();
   renderAll();
+});
+
+/* ---------- timer (start/stop) for Toma & Biberón ---------- */
+
+const timerOverlay = $("#timerOverlay");
+let timerState = null; // { type, startDate, tickId }
+let pendingTimerType = null;
+
+function fmtClock(totalSeconds){
+  const h = Math.floor(totalSeconds/3600);
+  const m = Math.floor((totalSeconds%3600)/60);
+  const s = totalSeconds%60;
+  if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+  return `${pad(m)}:${pad(s)}`;
+}
+
+function openTimerForNew(type){
+  timerState = null;
+  pendingTimerType = type;
+  const meta = TYPES[type];
+  $("#timerTag").textContent = meta.glyph;
+  $("#timerTag").style.background = meta.soft;
+  $("#timerTag").style.color = meta.color;
+  $("#timerTitle").textContent = meta.label;
+  $("#timerSub").textContent = "Elige la hora de inicio";
+  $("#timerStartFields").style.display = "flex";
+  $("#timerDisplay").style.display = "none";
+  $("#timerNotesRow").style.display = "none";
+  $("#btnTimerStart").style.display = "block";
+  $("#btnTimerStop").style.display = "none";
+  $("#btnTimerCancel").textContent = "Cancelar";
+  $("#tNotes").value = "";
+
+  const now = new Date();
+  const parts = toLocalInputParts(now);
+  $("#tStartDate").value = parts.date;
+  $("#tStartTime").value = parts.time;
+
+  timerOverlay.classList.add("show");
+}
+
+function tickTimer(){
+  if (!timerState) return;
+  const elapsedSec = Math.max(0, Math.round((Date.now() - timerState.startDate.getTime())/1000));
+  $("#timerClock").textContent = fmtClock(elapsedSec);
+}
+
+$("#btnTimerStart").addEventListener('click', () => {
+  const dateStr = $("#tStartDate").value;
+  const timeStr = $("#tStartTime").value;
+  if (!dateStr || !timeStr){ showToast("Falta fecha u hora de inicio"); return; }
+  const startDate = fromLocalInputParts(dateStr, timeStr);
+  const type = pendingTimerType;
+
+  timerState = { type, startDate, tickId: null };
+  $("#timerStartFields").style.display = "none";
+  $("#timerDisplay").style.display = "block";
+  $("#timerNotesRow").style.display = "block";
+  $("#timerStartedAt").textContent = `Inicio: ${startDate.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' })}`;
+  $("#btnTimerStart").style.display = "none";
+  $("#btnTimerStop").style.display = "block";
+  $("#btnTimerCancel").textContent = "Descartar";
+  tickTimer();
+  timerState.tickId = setInterval(tickTimer, 1000);
+});
+
+$("#btnTimerStop").addEventListener('click', async () => {
+  if (!timerState) return;
+  clearInterval(timerState.tickId);
+  const startDate = timerState.startDate;
+  const type = timerState.type;
+  const durationSeconds = Math.max(0, Math.round((Date.now() - startDate.getTime())/1000));
+  const notes = $("#tNotes").value.trim();
+
+  await createEvent(type, startDate.toISOString(), notes, durationSeconds);
+  showToast(`${TYPES[type].label} registrado · ${fmtClock(durationSeconds)}`);
+  timerState = null;
+  timerOverlay.classList.remove("show");
+  renderAll();
+});
+
+$("#btnTimerCancel").addEventListener('click', () => {
+  if (timerState) clearInterval(timerState.tickId);
+  timerState = null;
+  timerOverlay.classList.remove("show");
+});
+
+timerOverlay.addEventListener('click', (e) => {
+  if (e.target === timerOverlay && !timerState){
+    timerOverlay.classList.remove("show");
+  }
 });
 
 /* ---------- interval editor ---------- */
@@ -359,7 +470,7 @@ async function loadEvents(){
     return;
   }
   try{
-    const rows = await sbRequest(`${TABLE}?select=id,type,occurred_at,notes&order=occurred_at.desc&limit=200`);
+    const rows = await sbRequest(`${TABLE}?select=id,type,occurred_at,notes,duration_seconds&order=occurred_at.desc&limit=200`);
     events = rows || [];
   } catch(err){
     console.error(err);
@@ -367,14 +478,14 @@ async function loadEvents(){
   }
 }
 
-async function createEvent(type, iso, notes){
-  const local = { id: 'tmp-' + Date.now(), type, occurred_at: iso, notes: notes || null };
+async function createEvent(type, iso, notes, durationSeconds){
+  const local = { id: 'tmp-' + Date.now(), type, occurred_at: iso, notes: notes || null, duration_seconds: durationSeconds ?? null };
   events.push(local);
   if (!HAS_SUPABASE) return;
   try{
     const rows = await sbRequest(TABLE, {
       method: "POST",
-      body: JSON.stringify([{ type, occurred_at: iso, notes: notes || null }])
+      body: JSON.stringify([{ type, occurred_at: iso, notes: notes || null, duration_seconds: durationSeconds ?? null }])
     });
     const idx = events.findIndex(e => e.id === local.id);
     if (idx >= 0 && rows && rows[0]) events[idx] = rows[0];
@@ -384,17 +495,20 @@ async function createEvent(type, iso, notes){
   }
 }
 
-async function updateEvent(id, iso, notes){
+async function updateEvent(id, iso, notes, durationSeconds){
   const idx = events.findIndex(e => e.id === id);
   if (idx >= 0){
     events[idx].occurred_at = iso;
     events[idx].notes = notes || null;
+    if (durationSeconds !== undefined) events[idx].duration_seconds = durationSeconds;
   }
   if (!HAS_SUPABASE || id.startsWith('tmp-')) return;
   try{
+    const patch = { occurred_at: iso, notes: notes || null };
+    if (durationSeconds !== undefined) patch.duration_seconds = durationSeconds;
     await sbRequest(`${TABLE}?id=eq.${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ occurred_at: iso, notes: notes || null })
+      body: JSON.stringify(patch)
     });
   } catch(err){
     console.error(err);

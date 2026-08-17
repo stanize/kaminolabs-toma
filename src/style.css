@@ -410,3 +410,26 @@ select#reportRange{
     border-color: #e08a9b;
   }
 }
+
+/* timer sheet */
+.timer-display{
+  text-align:center;
+  padding: 22px 10px 26px;
+}
+.timer-clock{
+  font-size:44px;
+  font-weight:700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing:.02em;
+  color: var(--ink);
+}
+.timer-started-at{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:12px;
+  color: var(--ink-dim);
+  margin-top:6px;
+}
+.btn-stop{
+  background: #c96f6f;
+  color: #fff;
+}
