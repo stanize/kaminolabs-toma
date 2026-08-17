@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Diario del bebé</title>
+<link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+<div class="app" id="app">
+
+  <header>
+    <p class="eyebrow" id="dateToday"></p>
+    <h1>Diario del bebé</h1>
+    <div class="baby-name-wrap">
+      <input class="baby-name" id="babyName" placeholder="Nombre del bebé (opcional)" />
+    </div>
+  </header>
+
+  <div id="setupNote"></div>
+
+  <div class="grid">
+    <button class="btn-track btn-pp" data-type="pp">
+      <span class="glyph">💧</span>
+      <div>
+        <div class="label">Pipí</div>
+        <div class="sub" id="lastPp">Sin registros</div>
+      </div>
+    </button>
+    <button class="btn-track btn-ka" data-type="ka">
+      <span class="glyph">💩</span>
+      <div>
+        <div class="label">Popó</div>
+        <div class="sub" id="lastKa">Sin registros</div>
+      </div>
+    </button>
+    <button class="btn-track btn-to" data-type="to">
+      <span class="glyph">🤱</span>
+      <div>
+        <div class="label">Toma</div>
+        <div class="sub" id="lastTo">Sin registros</div>
+      </div>
+    </button>
+    <button class="btn-track btn-ba" data-type="ba">
+      <span class="glyph">🛁</span>
+      <div>
+        <div class="label">Baño</div>
+        <div class="sub" id="lastBa">Sin registros</div>
+      </div>
+    </button>
+  </div>
+
+  <div class="section-title">
+    <span>Registro reciente</span>
+    <span class="status-dot"><span class="dot" id="connDot"></span><span id="connLabel">local</span></span>
+  </div>
+  <div class="log" id="log"></div>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="tag" id="sheetTag"></span>
+      <div>
+        <h2 id="sheetTitle"></h2>
+        <p id="sheetSub">Ajusta la fecha y hora si hace falta</p>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Fecha</label>
+        <input type="date" id="fDate" />
+      </div>
+      <div class="field">
+        <label>Hora</label>
+        <input type="time" id="fTime" />
+      </div>
+    </div>
+
+    <div class="quick-row">
+      <span class="quick" data-mins="0">Ahora</span>
+      <span class="quick" data-mins="-10">Hace 10 min</span>
+      <span class="quick" data-mins="-30">Hace 30 min</span>
+      <span class="quick" data-mins="-60">Hace 1 h</span>
+      <span class="quick" data-mins="-120">Hace 2 h</span>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-cancel" id="btnCancel">Cancelar</button>
+      <button class="btn btn-confirm" id="btnConfirm">Confirmar</button>
+    </div>
+    <button class="btn-delete" id="btnDelete" style="display:none;">Eliminar registro</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
