@@ -369,3 +369,29 @@ select#reportRange{
   color: var(--ink-dim);
   margin-top:2px;
 }
+
+.field textarea{
+  width:100%;
+  background: var(--bg-1);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding: 12px 12px;
+  color: var(--ink);
+  font-size:14px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  outline:none;
+  resize: vertical;
+  min-height:44px;
+}
+.field textarea:focus{ border-color: var(--ink-dim); }
+
+.entry .info .n{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:11.5px;
+  color: var(--ink-dim);
+  margin-top:3px;
+  font-style: italic;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}

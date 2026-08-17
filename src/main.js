@@ -133,11 +133,13 @@ function renderLog(){
   }
   log.innerHTML = sorted.slice(0, 5).map(e => {
     const meta = TYPES[e.type];
+    const noteHtml = e.notes ? `<div class="n">${escapeHtml(e.notes)}</div>` : "";
     return `<div class="entry" data-id="${e.id}">
       <span class="tag" style="background:${meta.soft};color:${meta.color}">${meta.glyph}</span>
       <div class="info">
         <div class="t">${meta.label}</div>
         <div class="d">${fmtEntryDate(e.occurred_at)}</div>
+        ${noteHtml}
       </div>
       <div class="ago">${relTime(e.occurred_at)}</div>
     </div>`;
@@ -146,6 +148,12 @@ function renderLog(){
   log.querySelectorAll('.entry').forEach(el => {
     el.addEventListener('click', () => openSheetForEdit(el.dataset.id));
   });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function renderAll(){ renderLastByType(); renderLog(); renderCountdown(); }
@@ -164,6 +172,7 @@ function openSheetForNew(type){
   const parts = toLocalInputParts(now);
   $("#fDate").value = parts.date;
   $("#fTime").value = parts.time;
+  $("#fNotes").value = "";
   overlay.classList.add("show");
 }
 
@@ -182,6 +191,7 @@ function openSheetForEdit(id){
   const parts = toLocalInputParts(new Date(e.occurred_at));
   $("#fDate").value = parts.date;
   $("#fTime").value = parts.time;
+  $("#fNotes").value = e.notes || "";
   overlay.classList.add("show");
 }
 
@@ -214,12 +224,13 @@ $("#btnConfirm").addEventListener('click', async () => {
   if (!dateStr || !timeStr){ showToast("Falta fecha u hora"); return; }
   const occurred = fromLocalInputParts(dateStr, timeStr);
   const iso = occurred.toISOString();
+  const notes = $("#fNotes").value.trim();
 
   if (editingId){
-    await updateEvent(editingId, iso);
+    await updateEvent(editingId, iso, notes);
     showToast("Registro actualizado");
   } else {
-    await createEvent(pendingType, iso);
+    await createEvent(pendingType, iso, notes);
     showToast(`${TYPES[pendingType].label} registrado`);
   }
   closeSheet();
@@ -345,7 +356,7 @@ async function loadEvents(){
     return;
   }
   try{
-    const rows = await sbRequest(`${TABLE}?select=id,type,occurred_at&order=occurred_at.desc&limit=200`);
+    const rows = await sbRequest(`${TABLE}?select=id,type,occurred_at,notes&order=occurred_at.desc&limit=200`);
     events = rows || [];
   } catch(err){
     console.error(err);
@@ -353,14 +364,14 @@ async function loadEvents(){
   }
 }
 
-async function createEvent(type, iso){
-  const local = { id: 'tmp-' + Date.now(), type, occurred_at: iso };
+async function createEvent(type, iso, notes){
+  const local = { id: 'tmp-' + Date.now(), type, occurred_at: iso, notes: notes || null };
   events.push(local);
   if (!HAS_SUPABASE) return;
   try{
     const rows = await sbRequest(TABLE, {
       method: "POST",
-      body: JSON.stringify([{ type, occurred_at: iso }])
+      body: JSON.stringify([{ type, occurred_at: iso, notes: notes || null }])
     });
     const idx = events.findIndex(e => e.id === local.id);
     if (idx >= 0 && rows && rows[0]) events[idx] = rows[0];
@@ -370,14 +381,17 @@ async function createEvent(type, iso){
   }
 }
 
-async function updateEvent(id, iso){
+async function updateEvent(id, iso, notes){
   const idx = events.findIndex(e => e.id === id);
-  if (idx >= 0) events[idx].occurred_at = iso;
+  if (idx >= 0){
+    events[idx].occurred_at = iso;
+    events[idx].notes = notes || null;
+  }
   if (!HAS_SUPABASE || id.startsWith('tmp-')) return;
   try{
     await sbRequest(`${TABLE}?id=eq.${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ occurred_at: iso })
+      body: JSON.stringify({ occurred_at: iso, notes: notes || null })
     });
   } catch(err){
     console.error(err);

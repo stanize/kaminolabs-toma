@@ -5,11 +5,13 @@ create table if not exists toma_events (
   id uuid primary key default gen_random_uuid(),
   type text not null check (type in ('pp', 'ka', 'to', 'ba', 'bi')),
   occurred_at timestamptz not null,
+  notes text,
   created_at timestamptz not null default now()
 );
 
 -- If you already ran an earlier version of this file, see schema_02.sql
--- for the migration to add 'bi' (biberón) to an existing table.
+-- for the migration to add 'bi' (biberón) to an existing table, and
+-- schema_03.sql for the migration to add the notes column.
 
 create index if not exists toma_events_occurred_at_idx
   on toma_events (occurred_at desc);
