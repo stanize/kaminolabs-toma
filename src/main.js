@@ -273,6 +273,7 @@ $("#btnDelete").addEventListener('click', async () => {
 const timerOverlay = $("#timerOverlay");
 let timerState = null; // { type, startDate, tickId }
 let pendingTimerType = null;
+let manualMode = false;
 
 function fmtClock(totalSeconds){
   const h = Math.floor(totalSeconds/3600);
@@ -285,6 +286,7 @@ function fmtClock(totalSeconds){
 function openTimerForNew(type){
   timerState = null;
   pendingTimerType = type;
+  manualMode = false;
   const meta = TYPES[type];
   $("#timerTag").textContent = meta.glyph;
   $("#timerTag").style.background = meta.soft;
@@ -292,12 +294,17 @@ function openTimerForNew(type){
   $("#timerTitle").textContent = meta.label;
   $("#timerSub").textContent = "Elige la hora de inicio";
   $("#timerStartFields").style.display = "flex";
+  $("#timerManualDurationRow").style.display = "none";
   $("#timerDisplay").style.display = "none";
-  $("#timerNotesRow").style.display = "none";
+  $("#timerNotesRow").style.display = "block";
+  $("#btnTimerManualToggle").style.display = "block";
+  $("#btnTimerManualToggle").textContent = "Ya terminó · añadir duración manualmente";
   $("#btnTimerStart").style.display = "block";
+  $("#btnTimerStart").textContent = "Iniciar";
   $("#btnTimerStop").style.display = "none";
   $("#btnTimerCancel").textContent = "Cancelar";
   $("#tNotes").value = "";
+  $("#tManualDuration").value = "";
 
   const now = new Date();
   const parts = toLocalInputParts(now);
@@ -307,21 +314,47 @@ function openTimerForNew(type){
   timerOverlay.classList.add("show");
 }
 
+$("#btnTimerManualToggle").addEventListener('click', () => {
+  manualMode = !manualMode;
+  if (manualMode){
+    $("#timerManualDurationRow").style.display = "block";
+    $("#btnTimerManualToggle").textContent = "Volver al cronómetro en vivo";
+    $("#btnTimerStart").textContent = "Guardar";
+  } else {
+    $("#timerManualDurationRow").style.display = "none";
+    $("#btnTimerManualToggle").textContent = "Ya terminó · añadir duración manualmente";
+    $("#btnTimerStart").textContent = "Iniciar";
+  }
+});
+
 function tickTimer(){
   if (!timerState) return;
   const elapsedSec = Math.max(0, Math.round((Date.now() - timerState.startDate.getTime())/1000));
   $("#timerClock").textContent = fmtClock(elapsedSec);
 }
 
-$("#btnTimerStart").addEventListener('click', () => {
+$("#btnTimerStart").addEventListener('click', async () => {
   const dateStr = $("#tStartDate").value;
   const timeStr = $("#tStartTime").value;
   if (!dateStr || !timeStr){ showToast("Falta fecha u hora de inicio"); return; }
   const startDate = fromLocalInputParts(dateStr, timeStr);
   const type = pendingTimerType;
 
+  if (manualMode){
+    const mins = parseFloat($("#tManualDuration").value);
+    if (isNaN(mins) || mins < 0){ showToast("Indica la duración en minutos"); return; }
+    const durationSeconds = Math.round(mins * 60);
+    const notes = $("#tNotes").value.trim();
+    await createEvent(type, startDate.toISOString(), notes, durationSeconds);
+    showToast(`${TYPES[type].label} registrado · ${fmtClock(durationSeconds)}`);
+    timerOverlay.classList.remove("show");
+    renderAll();
+    return;
+  }
+
   timerState = { type, startDate, tickId: null };
   $("#timerStartFields").style.display = "none";
+  $("#btnTimerManualToggle").style.display = "none";
   $("#timerDisplay").style.display = "block";
   $("#timerNotesRow").style.display = "block";
   $("#timerStartedAt").textContent = `Inicio: ${startDate.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' })}`;
