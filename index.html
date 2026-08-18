@@ -383,8 +383,26 @@
 <script type="module" src="/src/main.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
+    let refreshing = false;
+
+    // Reload once when a new service worker takes control, so updates
+    // apply automatically instead of requiring a manual force-close.
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        // Check for a newer service worker whenever the app is reopened.
+        reg.update().catch(() => {});
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            reg.update().catch(() => {});
+          }
+        });
+      }).catch((err) => {
         console.warn('Service worker registration failed:', err);
       });
     });
