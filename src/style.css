@@ -716,3 +716,33 @@ select#reportRange{
 }
 .qa-cancel{ background: var(--bg-1); color: var(--ink-dim); border:1px solid var(--line) !important; }
 .qa-save{ background: var(--ink); color: var(--bg-0); }
+
+/* range list (replaces select dropdown) */
+.range-list{
+  display:flex;
+  flex-direction:column;
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:hidden;
+}
+.range-item{
+  background: var(--bg-1);
+  border:none;
+  border-bottom:1px solid var(--line);
+  color: var(--ink);
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size:14px;
+  text-align:left;
+  padding: 12px 14px;
+  cursor:pointer;
+}
+.range-item:last-child{ border-bottom:none; }
+.range-item.active{
+  background: var(--ink);
+  color: var(--bg-0);
+  font-weight:600;
+}
+
+/* report cells become clickable */
+.report-cell{ cursor:pointer; }
+.report-cell:active{ transform: scale(0.97); }

@@ -535,9 +535,16 @@ function rangeStartEnd(rangeKey){
   return [new Date(0), new Date(8640000000000000)]; // all
 }
 
+let currentReportRange = "today";
+
 function renderReport(rangeKey){
+  currentReportRange = rangeKey;
   const [start, end] = rangeStartEnd(rangeKey);
   $("#reportRangeLabel").textContent = RANGE_LABELS[rangeKey];
+
+  $("#rangeList").querySelectorAll('.range-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.range === rangeKey);
+  });
 
   const counts = {};
   Object.keys(TYPES).forEach(t => counts[t] = 0);
@@ -549,7 +556,7 @@ function renderReport(rangeKey){
   const grid = $("#reportGrid");
   grid.innerHTML = Object.keys(TYPES).map(t => {
     const meta = TYPES[t];
-    return `<div class="report-cell">
+    return `<div class="report-cell" data-type="${t}">
       <span class="tag" style="background:${meta.soft};color:${meta.color}">${meta.glyph}</span>
       <div>
         <div class="count">${counts[t]}</div>
@@ -557,6 +564,10 @@ function renderReport(rangeKey){
       </div>
     </div>`;
   }).join("");
+
+  grid.querySelectorAll('.report-cell').forEach(cell => {
+    cell.addEventListener('click', () => openTypeDetail(cell.dataset.type));
+  });
 
   renderTimeline(start, end);
 }
@@ -628,12 +639,65 @@ function renderTimeline(start, end){
 }
 
 $("#btnReport").addEventListener('click', () => {
-  renderReport($("#reportRange").value);
+  renderReport(currentReportRange);
   reportOverlay.classList.add("show");
 });
 $("#btnReportClose").addEventListener('click', () => reportOverlay.classList.remove("show"));
 reportOverlay.addEventListener('click', (e) => { if (e.target === reportOverlay) reportOverlay.classList.remove("show"); });
-$("#reportRange").addEventListener('change', (e) => renderReport(e.target.value));
+$("#rangeList").querySelectorAll('.range-item').forEach(btn => {
+  btn.addEventListener('click', () => renderReport(btn.dataset.range));
+});
+
+/* ---------- type detail (full list for one event type in current range) ---------- */
+
+const typeDetailOverlay = $("#typeDetailOverlay");
+
+function openTypeDetail(type){
+  const meta = TYPES[type];
+  const [start, end] = rangeStartEnd(currentReportRange);
+  const filtered = events
+    .filter(e => e.type === type && new Date(e.occurred_at) >= start && new Date(e.occurred_at) < end)
+    .sort((a,b) => new Date(b.occurred_at) - new Date(a.occurred_at));
+
+  $("#typeDetailTag").textContent = meta.glyph;
+  $("#typeDetailTag").style.background = meta.soft;
+  $("#typeDetailTag").style.color = meta.color;
+  $("#typeDetailTitle").textContent = meta.label;
+  $("#typeDetailSub").textContent = `${RANGE_LABELS[currentReportRange]} · ${filtered.length} registro${filtered.length === 1 ? '' : 's'}`;
+
+  const log = $("#typeDetailLog");
+  if (filtered.length === 0){
+    log.innerHTML = `<div class="empty">No hay registros de ${meta.label.toLowerCase()} en este rango.</div>`;
+  } else {
+    log.innerHTML = filtered.map(e => {
+      const noteHtml = e.notes ? `<div class="n">${escapeHtml(e.notes)}</div>` : "";
+      const durationHtml = e.duration_seconds ? ` · ${fmtClock(e.duration_seconds)}` : "";
+      const mlHtml = e.ml_amount != null ? ` · ${e.ml_amount}ml` : "";
+      return `<div class="entry" data-id="${e.id}">
+        <span class="tag" style="background:${meta.soft};color:${meta.color}">${meta.glyph}</span>
+        <div class="info">
+          <div class="t">${meta.label}</div>
+          <div class="d">${fmtEntryDate(e.occurred_at)}${durationHtml}${mlHtml}</div>
+          ${noteHtml}
+        </div>
+        <div class="ago">${relTime(e.occurred_at)}</div>
+      </div>`;
+    }).join("");
+
+    log.querySelectorAll('.entry').forEach(el => {
+      el.addEventListener('click', () => {
+        typeDetailOverlay.classList.remove("show");
+        reportOverlay.classList.remove("show");
+        openSheetForEdit(el.dataset.id);
+      });
+    });
+  }
+
+  typeDetailOverlay.classList.add("show");
+}
+
+$("#btnTypeDetailClose").addEventListener('click', () => typeDetailOverlay.classList.remove("show"));
+typeDetailOverlay.addEventListener('click', (e) => { if (e.target === typeDetailOverlay) typeDetailOverlay.classList.remove("show"); });
 
 async function sbRequest(path, options = {}){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
