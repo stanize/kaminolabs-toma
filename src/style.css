@@ -553,3 +553,108 @@ select#reportRange{
   text-align:center;
   padding: 10px 0;
 }
+
+/* btn row for report + questions */
+.btn-row{
+  display:flex;
+  gap:10px;
+  margin-top:16px;
+}
+.btn-row .btn-report{ margin-top:0; flex:1; }
+
+/* questions checklist */
+.question-add-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:16px;
+}
+.question-add-row input{
+  flex:1;
+  background: var(--bg-1);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding: 11px 12px;
+  color: var(--ink);
+  font-size:14px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  outline:none;
+}
+.question-add-row input:focus{ border-color: var(--ink-dim); }
+.question-add-row button{
+  background: var(--ink);
+  color: var(--bg-0);
+  border:none;
+  border-radius:12px;
+  padding: 0 16px;
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.question-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-height: 360px;
+  overflow-y:auto;
+}
+.question-item{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  background: var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding: 12px 12px;
+}
+.question-check{
+  width:20px; height:20px;
+  border-radius:6px;
+  border: 1.5px solid var(--ink-dim);
+  flex-shrink:0;
+  margin-top:1px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  font-size:13px;
+  color: transparent;
+}
+.question-item.checked .question-check{
+  background: #6fb8b0;
+  border-color: #6fb8b0;
+  color: #14101f;
+}
+.question-text{
+  flex:1;
+  font-size:14px;
+  line-height:1.4;
+  cursor:pointer;
+}
+.question-item.checked .question-text{
+  color: var(--ink-dim);
+  text-decoration: line-through;
+}
+.question-date{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:10px;
+  color: var(--ink-dim);
+  margin-top:3px;
+}
+.question-delete{
+  background:none;
+  border:none;
+  color: var(--ink-dim);
+  font-size:16px;
+  cursor:pointer;
+  padding:0 2px;
+  flex-shrink:0;
+}
+.question-empty{
+  text-align:center;
+  color: var(--ink-dim);
+  font-size:13px;
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  padding: 24px 10px;
+}

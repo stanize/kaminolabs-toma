@@ -608,6 +608,130 @@ async function sbRequest(path, options = {}){
 
 let loadError = null;
 
+/* ---------- pediatrician questions ---------- */
+
+const QUESTIONS_TABLE = "toma_questions";
+const questionsOverlay = $("#questionsOverlay");
+let questions = [];
+
+function renderQuestions(){
+  const list = $("#questionList");
+  if (questions.length === 0){
+    list.innerHTML = `<div class="question-empty">Aún no hay preguntas guardadas.</div>`;
+    return;
+  }
+  const sorted = [...questions].sort((a,b) => {
+    if (a.is_checked !== b.is_checked) return a.is_checked ? 1 : -1;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+  list.innerHTML = sorted.map(q => {
+    const dateStr = new Date(q.created_at).toLocaleDateString('es-ES', { day:'2-digit', month:'short' });
+    return `<div class="question-item ${q.is_checked ? 'checked' : ''}" data-id="${q.id}">
+      <span class="question-check">✓</span>
+      <div style="flex:1;">
+        <div class="question-text">${escapeHtml(q.text)}</div>
+        <div class="question-date">${dateStr}</div>
+      </div>
+      <button class="question-delete" data-id="${q.id}">✕</button>
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll('.question-check, .question-text').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const id = e.target.closest('.question-item').dataset.id;
+      toggleQuestion(id);
+    });
+  });
+  list.querySelectorAll('.question-delete').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteQuestion(el.dataset.id);
+    });
+  });
+}
+
+async function loadQuestions(){
+  if (!HAS_SUPABASE){ questions = []; return; }
+  try{
+    const rows = await sbRequest(`${QUESTIONS_TABLE}?select=id,text,is_checked,created_at&order=created_at.desc&limit=200`);
+    questions = rows || [];
+  } catch(err){
+    console.error(err);
+    showToast("No se pudieron cargar las preguntas");
+  }
+}
+
+async function addQuestion(text){
+  const local = { id: 'tmp-' + Date.now(), text, is_checked: false, created_at: new Date().toISOString() };
+  questions.push(local);
+  renderQuestions();
+  if (!HAS_SUPABASE) return;
+  try{
+    const rows = await sbRequest(QUESTIONS_TABLE, {
+      method: "POST",
+      body: JSON.stringify([{ text, is_checked: false }])
+    });
+    const idx = questions.findIndex(q => q.id === local.id);
+    if (idx >= 0 && rows && rows[0]) questions[idx] = rows[0];
+    renderQuestions();
+  } catch(err){
+    console.error(err);
+    showToast("Guardado local (sin conexión)");
+  }
+}
+
+async function toggleQuestion(id){
+  const q = questions.find(x => x.id === id);
+  if (!q) return;
+  q.is_checked = !q.is_checked;
+  renderQuestions();
+  if (!HAS_SUPABASE || id.startsWith('tmp-')) return;
+  try{
+    await sbRequest(`${QUESTIONS_TABLE}?id=eq.${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ is_checked: q.is_checked })
+    });
+  } catch(err){
+    console.error(err);
+    showToast("No se pudo sincronizar");
+  }
+}
+
+async function deleteQuestion(id){
+  questions = questions.filter(q => q.id !== id);
+  renderQuestions();
+  if (!HAS_SUPABASE || id.startsWith('tmp-')) return;
+  try{
+    await sbRequest(`${QUESTIONS_TABLE}?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
+  } catch(err){
+    console.error(err);
+    showToast("No se pudo eliminar en el servidor");
+  }
+}
+
+$("#btnQuestions").addEventListener('click', async () => {
+  questionsOverlay.classList.add("show");
+  renderQuestions();
+  await loadQuestions();
+  renderQuestions();
+});
+$("#btnQuestionsClose").addEventListener('click', () => questionsOverlay.classList.remove("show"));
+questionsOverlay.addEventListener('click', (e) => { if (e.target === questionsOverlay) questionsOverlay.classList.remove("show"); });
+
+$("#btnQuestionAdd").addEventListener('click', () => {
+  const input = $("#qNewText");
+  const text = input.value.trim();
+  if (!text) return;
+  addQuestion(text);
+  input.value = "";
+});
+$("#qNewText").addEventListener('keydown', (e) => {
+  if (e.key === 'Enter'){
+    e.preventDefault();
+    $("#btnQuestionAdd").click();
+  }
+});
+
 async function loadEvents(){
   loadError = null;
   if (!HAS_SUPABASE){

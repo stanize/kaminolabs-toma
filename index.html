@@ -65,7 +65,10 @@
     </button>
   </div>
 
-  <button class="btn-report" id="btnReport">Ver informe</button>
+  <div class="btn-row">
+    <button class="btn-report" id="btnReport">Ver informe</button>
+    <button class="btn-report" id="btnQuestions">Preguntas al pediatra</button>
+  </div>
 
   <div class="section-title">
     <span>Registro reciente</span>
@@ -113,6 +116,29 @@
 
     <div class="actions" style="margin-top:18px;">
       <button class="btn btn-cancel" id="btnReportClose">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="questionsOverlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="tag" style="background:#241c3d;color:#e9e4f0;">🩺</span>
+      <div>
+        <h2>Preguntas al pediatra</h2>
+        <p>Se van marcando cuando ya se preguntaron</p>
+      </div>
+    </div>
+
+    <div class="question-add-row">
+      <input type="text" id="qNewText" placeholder="Ej. ¿Es normal que llore antes de cada toma?" />
+      <button id="btnQuestionAdd">Añadir</button>
+    </div>
+
+    <div class="question-list" id="questionList"></div>
+
+    <div class="actions" style="margin-top:18px;">
+      <button class="btn btn-cancel" id="btnQuestionsClose">Cerrar</button>
     </div>
   </div>
 </div>
