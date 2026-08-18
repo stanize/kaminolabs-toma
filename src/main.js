@@ -46,6 +46,12 @@ function fmtDateHeader(){
 
 function pad(n){ return String(n).padStart(2,'0'); }
 
+function parseDecimal(str){
+  if (str == null) return NaN;
+  const cleaned = String(str).trim().replace(',', '.');
+  return parseFloat(cleaned);
+}
+
 function toLocalInputParts(date){
   return {
     date: `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`,
@@ -498,7 +504,7 @@ $("#countdownCard").addEventListener('click', () => {
 $("#btnIntervalCancel").addEventListener('click', () => intervalOverlay.classList.remove("show"));
 intervalOverlay.addEventListener('click', (e) => { if (e.target === intervalOverlay) intervalOverlay.classList.remove("show"); });
 $("#btnIntervalSave").addEventListener('click', () => {
-  const v = parseFloat($("#intervalInput").value);
+  const v = parseDecimal($("#intervalInput").value);
   if (!isNaN(v) && v > 0){
     feedIntervalHours = v;
     renderCountdown();
@@ -863,7 +869,7 @@ weightOverlay.addEventListener('click', (e) => { if (e.target === weightOverlay)
 
 $("#btnWeightAdd").addEventListener('click', () => {
   const dateStr = $("#wDate").value;
-  const kg = parseFloat($("#wKg").value);
+  const kg = parseDecimal($("#wKg").value);
   if (!dateStr){ showToast("Falta la fecha"); return; }
   if (isNaN(kg) || kg <= 0){ showToast("Indica un peso válido en kg"); return; }
   const notes = $("#wNotes").value.trim();
