@@ -509,6 +509,74 @@ function renderReport(rangeKey){
       </div>
     </div>`;
   }).join("");
+
+  renderTimeline(start, end);
+}
+
+function dayKey(d){
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function renderTimeline(start, end){
+  const legend = $("#timelineLegend");
+  legend.innerHTML = Object.keys(TYPES).map(t => {
+    const meta = TYPES[t];
+    return `<span class="item"><span class="dot" style="background:${meta.color}"></span>${meta.label}</span>`;
+  }).join("");
+
+  // Cap the number of day-rows shown for readability
+  const MAX_DAYS = 14;
+  const effectiveEnd = end > new Date() ? new Date() : end;
+  let clampedStart = start;
+  const spanDays = Math.ceil((effectiveEnd - start) / 86400000);
+  if (spanDays > MAX_DAYS){
+    clampedStart = new Date(effectiveEnd.getTime() - MAX_DAYS * 86400000);
+  }
+
+  const inRange = events.filter(e => {
+    const t = new Date(e.occurred_at);
+    return t >= clampedStart && t < end;
+  });
+
+  const daysMap = {}; // dayKey -> [events]
+  inRange.forEach(e => {
+    const d = new Date(e.occurred_at);
+    const key = dayKey(d);
+    if (!daysMap[key]) daysMap[key] = [];
+    daysMap[key].push(e);
+  });
+
+  const dayKeys = Object.keys(daysMap).sort().reverse();
+  const container = $("#timelineDays");
+
+  if (dayKeys.length === 0){
+    container.innerHTML = `<div class="timeline-empty">No hay eventos en este rango.</div>`;
+    return;
+  }
+
+  const capNote = spanDays > MAX_DAYS
+    ? `<div class="timeline-empty" style="padding:0 0 10px;">Mostrando los últimos ${MAX_DAYS} días</div>`
+    : "";
+
+  container.innerHTML = capNote + dayKeys.map(key => {
+    const dayEvents = daysMap[key];
+    const dLabel = new Date(key + "T00:00:00").toLocaleDateString('es-ES', { day:'2-digit', month:'short' });
+    const marks = dayEvents.map(e => {
+      const t = new Date(e.occurred_at);
+      const minutesOfDay = t.getHours()*60 + t.getMinutes();
+      const leftPct = (minutesOfDay / 1440) * 100;
+      const meta = TYPES[e.type];
+      if (FEED_TYPES.includes(e.type) && e.duration_seconds){
+        const widthPct = Math.max((e.duration_seconds/60) / 1440 * 100, 0.6);
+        return `<div class="timeline-mark" style="left:${leftPct}%; width:${widthPct}%; background:${meta.color};" title="${meta.label}"></div>`;
+      }
+      return `<div class="timeline-mark dot-mark" style="left:${leftPct}%; background:${meta.color};" title="${meta.label}"></div>`;
+    }).join("");
+    return `<div class="timeline-day">
+      <div class="timeline-day-label">${dLabel}</div>
+      <div class="timeline-track">${marks}</div>
+    </div>`;
+  }).join("");
 }
 
 $("#btnReport").addEventListener('click', () => {
