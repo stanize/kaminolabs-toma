@@ -131,7 +131,11 @@ function renderLog(){
   const log = $("#log");
   const sorted = [...events].sort((a,b)=> new Date(b.occurred_at)-new Date(a.occurred_at));
   if (sorted.length === 0){
-    log.innerHTML = `<div class="empty">Aún no hay registros.<br/>Toca un botón de arriba para empezar.</div>`;
+    if (loadError){
+      log.innerHTML = `<div class="empty">No se pudieron cargar los registros.<br/>Revisa el aviso de arriba.</div>`;
+    } else {
+      log.innerHTML = `<div class="empty">Aún no hay registros.<br/>Toca un botón de arriba para empezar.</div>`;
+    }
     return;
   }
   log.innerHTML = sorted.slice(0, 5).map(e => {
@@ -516,7 +520,10 @@ async function sbRequest(path, options = {}){
   return text ? JSON.parse(text) : null;
 }
 
+let loadError = null;
+
 async function loadEvents(){
+  loadError = null;
   if (!HAS_SUPABASE){
     events = [];
     return;
@@ -526,6 +533,7 @@ async function loadEvents(){
     events = rows || [];
   } catch(err){
     console.error(err);
+    loadError = err.message || String(err);
     showToast("No se pudo conectar a Supabase");
   }
 }
@@ -583,6 +591,20 @@ function renderSetupNote(){
   const note = document.getElementById('setupNote');
   const dot = document.getElementById('connDot');
   const label = document.getElementById('connLabel');
+
+  if (loadError){
+    note.innerHTML = `<div class="setup-note error-note">
+      No se pudieron cargar los registros desde Supabase — no se ha perdido
+      nada, pero la app no puede leer la tabla ahora mismo. Causa más común:
+      falta aplicar una migración reciente en <code>supabase/</code>
+      (revisa <code>schema_02.sql</code>, <code>schema_03.sql</code>,
+      <code>schema_04.sql</code>). Detalle técnico: ${escapeHtml(loadError)}
+    </div>`;
+    dot.classList.add('off');
+    label.textContent = 'error de carga';
+    return;
+  }
+
   if (!HAS_SUPABASE){
     note.innerHTML = `<div class="setup-note">
       Falta configurar Supabase: define <code>VITE_SUPABASE_URL</code> y
@@ -593,15 +615,16 @@ function renderSetupNote(){
     dot.classList.add('off');
     label.textContent = 'sin conectar';
   } else {
-    note.remove();
+    note.innerHTML = "";
+    dot.classList.remove('off');
     label.textContent = 'sincronizado';
   }
 }
 
 (async function boot(){
   fmtDateHeader();
-  renderSetupNote();
   await loadEvents();
+  renderSetupNote();
   renderAll();
   setInterval(renderAll, 60000);
 })();

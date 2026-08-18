@@ -447,3 +447,10 @@ select#reportRange{
   padding: 2px 0 18px;
   cursor:pointer;
 }
+
+.setup-note.error-note{
+  border-color: #6b3838;
+  background: #2c1f21;
+  color: #e8b6b6;
+}
+.setup-note.error-note code{ color:#e8b45c; }
