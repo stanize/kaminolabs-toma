@@ -7,14 +7,16 @@ create table if not exists toma_events (
   occurred_at timestamptz not null,
   notes text,
   duration_seconds integer,
+  ml_amount integer,
   created_at timestamptz not null default now()
 );
 
 -- If you already ran an earlier version of this file, see schema_02.sql
 -- for the migration to add 'bi' (biberón) to an existing table,
--- schema_03.sql for the migration to add the notes column, and
+-- schema_03.sql for the migration to add the notes column,
 -- schema_04.sql for the migration to add duration_seconds (used by the
--- start/stop timer for Toma and Biberón).
+-- start/stop timer for Toma and Biberón), and schema_07.sql for the
+-- migration to add ml_amount (used by Biberón entries).
 
 create index if not exists toma_events_occurred_at_idx
   on toma_events (occurred_at desc);

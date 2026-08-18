@@ -148,11 +148,12 @@ function renderLog(){
     const meta = TYPES[e.type];
     const noteHtml = e.notes ? `<div class="n">${escapeHtml(e.notes)}</div>` : "";
     const durationHtml = e.duration_seconds ? ` · ${fmtClock(e.duration_seconds)}` : "";
+    const mlHtml = e.ml_amount != null ? ` · ${e.ml_amount}ml` : "";
     return `<div class="entry" data-id="${e.id}">
       <span class="tag" style="background:${meta.soft};color:${meta.color}">${meta.glyph}</span>
       <div class="info">
         <div class="t">${meta.label}</div>
-        <div class="d">${fmtEntryDate(e.occurred_at)}${durationHtml}</div>
+        <div class="d">${fmtEntryDate(e.occurred_at)}${durationHtml}${mlHtml}</div>
         ${noteHtml}
       </div>
       <div class="ago">${relTime(e.occurred_at)}</div>
@@ -195,6 +196,7 @@ function openSheetForNew(type){
   $("#sheetSub").textContent = "Ajusta la fecha y hora si hace falta";
   $("#btnDelete").style.display = "none";
   $("#fDurationRow").style.display = "none";
+  $("#fMlRow").style.display = "none";
   const now = new Date();
   const parts = toLocalInputParts(now);
   $("#fDate").value = parts.date;
@@ -221,9 +223,16 @@ function openSheetForEdit(id){
   $("#fNotes").value = e.notes || "";
   if (FEED_TYPES.includes(e.type)){
     $("#fDurationRow").style.display = "block";
+    $("#fDurationLabel").textContent = e.type === "bi" ? "Duración (minutos, opcional)" : "Duración (minutos)";
     $("#fDuration").value = e.duration_seconds ? Math.round(e.duration_seconds/60) : "";
   } else {
     $("#fDurationRow").style.display = "none";
+  }
+  if (e.type === "bi"){
+    $("#fMlRow").style.display = "block";
+    $("#fMl").value = e.ml_amount != null ? e.ml_amount : "";
+  } else {
+    $("#fMlRow").style.display = "none";
   }
   overlay.classList.add("show");
 }
@@ -266,13 +275,19 @@ $("#btnConfirm").addEventListener('click', async () => {
   const iso = occurred.toISOString();
   const notes = $("#fNotes").value.trim();
   let durationSeconds = null;
+  let mlAmount = null;
   if (editingId && FEED_TYPES.includes(pendingType)){
     const mins = parseFloat($("#fDuration").value);
     durationSeconds = (!isNaN(mins) && mins >= 0) ? Math.round(mins * 60) : null;
   }
+  if (editingId && pendingType === "bi"){
+    const ml = parseFloat($("#fMl").value);
+    if (isNaN(ml) || ml < 0){ showToast("Indica la cantidad en ml"); return; }
+    mlAmount = Math.round(ml);
+  }
 
   if (editingId){
-    await updateEvent(editingId, iso, notes, durationSeconds);
+    await updateEvent(editingId, iso, notes, durationSeconds, mlAmount);
     showToast("Registro actualizado");
   } else {
     await createEvent(pendingType, iso, notes);
@@ -316,6 +331,7 @@ function openTimerForNew(type){
   $("#timerTitle").textContent = meta.label;
   $("#timerSub").textContent = "Elige la hora de inicio";
   $("#timerStartFields").style.display = "flex";
+  $("#timerMlRow").style.display = type === "bi" ? "block" : "none";
   $("#timerManualDurationRow").style.display = "none";
   $("#timerDisplay").style.display = "none";
   $("#timerReviewRow").style.display = "none";
@@ -329,6 +345,8 @@ function openTimerForNew(type){
   $("#btnTimerCancel").textContent = "Cancelar";
   $("#tNotes").value = "";
   $("#tManualDuration").value = "";
+  $("#tManualDurationLabel").textContent = type === "bi" ? "Duración (minutos, opcional)" : "Duración (minutos)";
+  $("#tMl").value = "";
 
   const now = new Date();
   const parts = toLocalInputParts(now);
@@ -357,6 +375,13 @@ function tickTimer(){
   $("#timerClock").textContent = fmtClock(elapsedSec);
 }
 
+function readMl(type){
+  if (type !== "bi") return null;
+  const val = parseFloat($("#tMl").value);
+  if (isNaN(val) || val < 0) return undefined; // undefined = invalid/missing
+  return Math.round(val);
+}
+
 $("#btnTimerStart").addEventListener('click', async () => {
   const dateStr = $("#tStartDate").value;
   const timeStr = $("#tStartTime").value;
@@ -364,20 +389,32 @@ $("#btnTimerStart").addEventListener('click', async () => {
   const startDate = fromLocalInputParts(dateStr, timeStr);
   const type = pendingTimerType;
 
+  const ml = readMl(type);
+  if (type === "bi" && ml === undefined){ showToast("Indica la cantidad en ml"); return; }
+
   if (manualMode){
-    const mins = parseFloat($("#tManualDuration").value);
-    if (isNaN(mins) || mins < 0){ showToast("Indica la duración en minutos"); return; }
-    const durationSeconds = Math.round(mins * 60);
+    const minsRaw = $("#tManualDuration").value;
+    let durationSeconds = null;
+    if (minsRaw.trim() !== ""){
+      const mins = parseFloat(minsRaw);
+      if (isNaN(mins) || mins < 0){ showToast("Duración inválida"); return; }
+      durationSeconds = Math.round(mins * 60);
+    } else if (type !== "bi"){
+      showToast("Indica la duración en minutos");
+      return;
+    }
     const notes = $("#tNotes").value.trim();
-    await createEvent(type, startDate.toISOString(), notes, durationSeconds);
-    showToast(`${TYPES[type].label} registrado · ${fmtClock(durationSeconds)}`);
+    await createEvent(type, startDate.toISOString(), notes, durationSeconds, ml);
+    const durLabel = durationSeconds != null ? ` · ${fmtClock(durationSeconds)}` : "";
+    showToast(`${TYPES[type].label} registrado${durLabel}`);
     timerOverlay.classList.remove("show");
     renderAll();
     return;
   }
 
-  timerState = { type, startDate, tickId: null };
+  timerState = { type, startDate, ml, tickId: null };
   $("#timerStartFields").style.display = "none";
+  $("#timerMlRow").style.display = "none";
   $("#btnTimerManualToggle").style.display = "none";
   $("#timerDisplay").style.display = "block";
   $("#timerNotesRow").style.display = "block";
@@ -398,6 +435,9 @@ $("#btnTimerStop").addEventListener('click', () => {
   $("#timerSub").textContent = "Revisa la duración antes de guardar";
   $("#timerClock").textContent = fmtClock(durationSeconds);
   $("#timerReviewRow").style.display = "block";
+  $("#tReviewDurationLabel").textContent = timerState.type === "bi"
+    ? "Duración (minutos, opcional) · ajustar si hace falta"
+    : "Duración (minutos) · ajustar si hace falta";
   $("#tReviewDuration").value = Math.round(durationSeconds/60);
   $("#btnTimerStop").style.display = "none";
   $("#btnTimerSaveReview").style.display = "block";
@@ -406,16 +446,24 @@ $("#btnTimerStop").addEventListener('click', () => {
 
 $("#btnTimerSaveReview").addEventListener('click', async () => {
   if (!timerState) return;
-  const mins = parseFloat($("#tReviewDuration").value);
-  const durationSeconds = (!isNaN(mins) && mins >= 0)
-    ? Math.round(mins * 60)
-    : timerState.finalDurationSeconds;
+  const raw = $("#tReviewDuration").value;
+  let durationSeconds;
+  if (raw.trim() === "" && timerState.type === "bi"){
+    durationSeconds = null;
+  } else {
+    const mins = parseFloat(raw);
+    durationSeconds = (!isNaN(mins) && mins >= 0)
+      ? Math.round(mins * 60)
+      : timerState.finalDurationSeconds;
+  }
   const type = timerState.type;
   const startDate = timerState.startDate;
   const notes = $("#tNotes").value.trim();
+  const ml = timerState.ml ?? null;
 
-  await createEvent(type, startDate.toISOString(), notes, durationSeconds);
-  showToast(`${TYPES[type].label} registrado · ${fmtClock(durationSeconds)}`);
+  await createEvent(type, startDate.toISOString(), notes, durationSeconds, ml);
+  const durLabel = durationSeconds != null ? ` · ${fmtClock(durationSeconds)}` : "";
+  showToast(`${TYPES[type].label} registrado${durLabel}`);
   timerState = null;
   timerOverlay.classList.remove("show");
   renderAll();
@@ -797,7 +845,7 @@ async function loadEvents(){
     return;
   }
   try{
-    const rows = await sbRequest(`${TABLE}?select=id,type,occurred_at,notes,duration_seconds&order=occurred_at.desc&limit=200`);
+    const rows = await sbRequest(`${TABLE}?select=id,type,occurred_at,notes,duration_seconds,ml_amount&order=occurred_at.desc&limit=200`);
     events = rows || [];
   } catch(err){
     console.error(err);
@@ -806,14 +854,14 @@ async function loadEvents(){
   }
 }
 
-async function createEvent(type, iso, notes, durationSeconds){
-  const local = { id: 'tmp-' + Date.now(), type, occurred_at: iso, notes: notes || null, duration_seconds: durationSeconds ?? null };
+async function createEvent(type, iso, notes, durationSeconds, mlAmount){
+  const local = { id: 'tmp-' + Date.now(), type, occurred_at: iso, notes: notes || null, duration_seconds: durationSeconds ?? null, ml_amount: mlAmount ?? null };
   events.push(local);
   if (!HAS_SUPABASE) return;
   try{
     const rows = await sbRequest(TABLE, {
       method: "POST",
-      body: JSON.stringify([{ type, occurred_at: iso, notes: notes || null, duration_seconds: durationSeconds ?? null }])
+      body: JSON.stringify([{ type, occurred_at: iso, notes: notes || null, duration_seconds: durationSeconds ?? null, ml_amount: mlAmount ?? null }])
     });
     const idx = events.findIndex(e => e.id === local.id);
     if (idx >= 0 && rows && rows[0]) events[idx] = rows[0];
@@ -823,17 +871,19 @@ async function createEvent(type, iso, notes, durationSeconds){
   }
 }
 
-async function updateEvent(id, iso, notes, durationSeconds){
+async function updateEvent(id, iso, notes, durationSeconds, mlAmount){
   const idx = events.findIndex(e => e.id === id);
   if (idx >= 0){
     events[idx].occurred_at = iso;
     events[idx].notes = notes || null;
     if (durationSeconds !== undefined) events[idx].duration_seconds = durationSeconds;
+    if (mlAmount !== undefined) events[idx].ml_amount = mlAmount;
   }
   if (!HAS_SUPABASE || id.startsWith('tmp-')) return;
   try{
     const patch = { occurred_at: iso, notes: notes || null };
     if (durationSeconds !== undefined) patch.duration_seconds = durationSeconds;
+    if (mlAmount !== undefined) patch.ml_amount = mlAmount;
     await sbRequest(`${TABLE}?id=eq.${id}`, {
       method: "PATCH",
       body: JSON.stringify(patch)
