@@ -77,6 +77,17 @@
   <div class="log" id="log"></div>
   <button class="link-toggle" id="btnToggleLog" style="display:none;">Ver todos</button>
 
+  <div class="timeline-section" id="timelineSection">
+    <div class="timeline-header">
+      <span>Línea de tiempo · últimos 7 días</span>
+      <div class="timeline-legend" id="timelineLegend"></div>
+    </div>
+    <div class="timeline-days" id="timelineDays"></div>
+    <div class="timeline-axis">
+      <span>00</span><span>06</span><span>12</span><span>18</span><span>24</span>
+    </div>
+  </div>
+
 </div>
 
 <div class="overlay" id="reportOverlay">
@@ -102,17 +113,6 @@
     </div>
 
     <div class="report-grid" id="reportGrid"></div>
-
-    <div class="timeline-section" id="timelineSection">
-      <div class="timeline-header">
-        <span>Línea de tiempo</span>
-        <div class="timeline-legend" id="timelineLegend"></div>
-      </div>
-      <div class="timeline-days" id="timelineDays"></div>
-      <div class="timeline-axis">
-        <span>00</span><span>06</span><span>12</span><span>18</span><span>24</span>
-      </div>
-    </div>
 
     <div class="actions" style="margin-top:18px;">
       <button class="btn btn-cancel" id="btnReportClose">Cerrar</button>

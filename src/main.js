@@ -178,7 +178,13 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-function renderAll(){ renderLastByType(); renderLog(); renderCountdown(); }
+function renderAll(){
+  renderLastByType();
+  renderLog();
+  renderCountdown();
+  const now = new Date();
+  renderTimeline(new Date(now.getTime() - 7*86400000), now);
+}
 
 $("#btnToggleLog").addEventListener('click', () => {
   logExpanded = !logExpanded;
@@ -568,8 +574,6 @@ function renderReport(rangeKey){
   grid.querySelectorAll('.report-cell').forEach(cell => {
     cell.addEventListener('click', () => openTypeDetail(cell.dataset.type));
   });
-
-  renderTimeline(start, end);
 }
 
 function dayKey(d){
