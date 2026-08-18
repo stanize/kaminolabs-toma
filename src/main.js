@@ -267,9 +267,33 @@ function openSheetForEdit(id){
   overlay.classList.add("show");
 }
 
+function openWeightSheetForEdit(id){
+  const w = weights.find(x => x.id === id);
+  if (!w) return;
+  editingId = id;
+  pendingType = "we";
+  const meta = WEIGHT_META;
+  $("#sheetTag").textContent = meta.glyph;
+  $("#sheetTag").style.background = meta.soft;
+  $("#sheetTag").style.color = meta.color;
+  $("#sheetTitle").textContent = meta.label;
+  $("#sheetSub").textContent = "Editar peso";
+  $("#btnDelete").style.display = "block";
+  $("#fKgRow").style.display = "block";
+  $("#fTime").closest('.field').style.display = "none";
+  $("#fQuickRow").style.display = "none";
+  $("#fDurationRow").style.display = "none";
+  $("#fMlRow").style.display = "none";
+  $("#fDate").value = w.weighed_at;
+  $("#fKg").value = w.weight_kg;
+  $("#fNotes").value = w.notes || "";
+  weightOverlay.classList.remove("show");
+  overlay.classList.add("show");
+}
+
 function closeSheet(){
   overlay.classList.remove("show");
-  const wasWeight = pendingType === "we" && !editingId;
+  const wasWeight = pendingType === "we";
   editingId = null;
   pendingType = null;
   if (wasWeight){
@@ -305,12 +329,17 @@ $("#btnConfirm").addEventListener('click', async () => {
   const dateStr = $("#fDate").value;
   if (!dateStr){ showToast("Falta la fecha"); return; }
 
-  if (pendingType === "we" && !editingId){
+  if (pendingType === "we"){
     const kg = parseDecimal($("#fKg").value);
     if (isNaN(kg) || kg <= 0){ showToast("Indica un peso válido en kg"); return; }
     const notes = $("#fNotes").value.trim();
-    await addWeight(dateStr, kg, notes);
-    showToast("Peso registrado");
+    if (editingId){
+      await updateWeight(editingId, dateStr, kg, notes);
+      showToast("Peso actualizado");
+    } else {
+      await addWeight(dateStr, kg, notes);
+      showToast("Peso registrado");
+    }
     closeSheet();
     renderWeightList();
     return;
@@ -346,6 +375,13 @@ $("#btnConfirm").addEventListener('click', async () => {
 
 $("#btnDelete").addEventListener('click', async () => {
   if (!editingId) return;
+  if (pendingType === "we"){
+    await deleteWeight(editingId);
+    showToast("Peso eliminado");
+    closeSheet();
+    renderWeightList();
+    return;
+  }
   await deleteEvent(editingId);
   showToast("Registro eliminado");
   closeSheet();
@@ -836,7 +872,7 @@ function renderWeightList(){
   }).join("");
 
   list.querySelectorAll('.weight-item').forEach(el => {
-    el.addEventListener('click', () => deleteWeightPrompt(el.dataset.id));
+    el.addEventListener('click', () => openWeightSheetForEdit(el.dataset.id));
   });
 }
 
@@ -870,6 +906,25 @@ async function addWeight(dateStr, kg, notes){
   }
 }
 
+async function updateWeight(id, dateStr, kg, notes){
+  const idx = weights.findIndex(w => w.id === id);
+  if (idx >= 0){
+    weights[idx].weighed_at = dateStr;
+    weights[idx].weight_kg = kg;
+    weights[idx].notes = notes || null;
+  }
+  if (!HAS_SUPABASE || id.startsWith('tmp-')) return;
+  try{
+    await sbRequest(`${WEIGHT_TABLE}?id=eq.${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ weighed_at: dateStr, weight_kg: kg, notes: notes || null })
+    });
+  } catch(err){
+    console.error(err);
+    showToast("No se pudo sincronizar el cambio");
+  }
+}
+
 async function deleteWeight(id){
   weights = weights.filter(w => w.id !== id);
   renderWeightList();
@@ -879,12 +934,6 @@ async function deleteWeight(id){
   } catch(err){
     console.error(err);
     showToast("No se pudo eliminar en el servidor");
-  }
-}
-
-function deleteWeightPrompt(id){
-  if (confirm("¿Eliminar este registro de peso?")){
-    deleteWeight(id);
   }
 }
 
