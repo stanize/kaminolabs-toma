@@ -294,7 +294,12 @@ h1{ font-size:26px; font-weight:600; margin:0; letter-spacing:.01em; }
   margin-top:4px;
   font-variant-numeric: tabular-nums;
 }
-.countdown-time.overdue{ color:#e08a9b; }
+.countdown-time.overdue{ color:#e08a9b; animation: overdue-blink 1.4s ease-in-out infinite; }
+
+@keyframes overdue-blink{
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
 .countdown-sub{
   font-family:'Helvetica Neue',Arial,sans-serif;
   font-size:12px;
