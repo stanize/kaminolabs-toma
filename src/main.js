@@ -33,6 +33,12 @@ const $ = (sel) => document.querySelector(sel);
 const overlay = $("#overlay");
 const toast = $("#toast");
 
+function openOverlay(el){
+  el.classList.add("show");
+  const sheet = el.querySelector('.sheet');
+  if (sheet) sheet.scrollTop = 0;
+}
+
 function showToast(msg){
   toast.textContent = msg;
   toast.classList.add("show");
@@ -239,7 +245,7 @@ function openSheetForNew(type){
     $("#fQuickRow").style.display = "flex";
   }
 
-  overlay.classList.add("show");
+  openOverlay(overlay);
 }
 
 function openSheetForEdit(id){
@@ -274,7 +280,7 @@ function openSheetForEdit(id){
   } else {
     $("#fMlRow").style.display = "none";
   }
-  overlay.classList.add("show");
+  openOverlay(overlay);
 }
 
 function openWeightSheetForEdit(id){
@@ -298,7 +304,7 @@ function openWeightSheetForEdit(id){
   $("#fKg").value = w.weight_kg;
   $("#fNotes").value = w.notes || "";
   weightOverlay.classList.remove("show");
-  overlay.classList.add("show");
+  openOverlay(overlay);
 }
 
 function closeSheet(){
@@ -307,7 +313,7 @@ function closeSheet(){
   editingId = null;
   pendingType = null;
   if (wasWeight){
-    weightOverlay.classList.add("show");
+    openOverlay(weightOverlay);
   }
 }
 
@@ -446,7 +452,7 @@ function openTimerForNew(type){
   $("#tStartDate").value = parts.date;
   $("#tStartTime").value = parts.time;
 
-  timerOverlay.classList.add("show");
+  openOverlay(timerOverlay);
 }
 
 $("#btnTimerManualToggle").addEventListener('click', () => {
@@ -580,7 +586,7 @@ const intervalOverlay = $("#intervalOverlay");
 
 $("#countdownCard").addEventListener('click', () => {
   $("#intervalInput").value = feedIntervalHours;
-  intervalOverlay.classList.add("show");
+  openOverlay(intervalOverlay);
 });
 $("#btnIntervalCancel").addEventListener('click', () => intervalOverlay.classList.remove("show"));
 intervalOverlay.addEventListener('click', (e) => { if (e.target === intervalOverlay) intervalOverlay.classList.remove("show"); });
@@ -731,7 +737,7 @@ function renderTimeline(start, end){
 
 $("#btnReport").addEventListener('click', () => {
   renderReport(currentReportRange);
-  reportOverlay.classList.add("show");
+  openOverlay(reportOverlay);
 });
 $("#btnReportClose").addEventListener('click', () => reportOverlay.classList.remove("show"));
 reportOverlay.addEventListener('click', (e) => { if (e.target === reportOverlay) reportOverlay.classList.remove("show"); });
@@ -784,7 +790,7 @@ function openTypeDetail(type){
     });
   }
 
-  typeDetailOverlay.classList.add("show");
+  openOverlay(typeDetailOverlay);
 }
 
 $("#btnTypeDetailClose").addEventListener('click', () => typeDetailOverlay.classList.remove("show"));
@@ -948,7 +954,7 @@ async function deleteWeight(id){
 }
 
 $("#btnWeight").addEventListener('click', async () => {
-  weightOverlay.classList.add("show");
+  openOverlay(weightOverlay);
   renderWeightList();
   await loadWeights();
   renderWeightList();
@@ -1121,7 +1127,7 @@ async function deleteQuestion(id){
 }
 
 $("#btnQuestions").addEventListener('click', async () => {
-  questionsOverlay.classList.add("show");
+  openOverlay(questionsOverlay);
   renderQuestions();
   await loadQuestions();
   renderQuestions();

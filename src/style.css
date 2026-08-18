@@ -183,7 +183,12 @@ h1{ font-size:26px; font-weight:600; margin:0; letter-spacing:.01em; }
   -webkit-overflow-scrolling: touch;
 }
 .overlay.show .sheet{ transform: translateY(0); }
-.sheet-head{ display:flex; align-items:center; gap:12px; margin-bottom: 18px; }
+.sheet-head{
+  display:flex; align-items:center; gap:12px; margin-bottom: 18px;
+  position: sticky; top: 0; z-index: 5;
+  background: var(--bg-2);
+  padding-top: 2px; padding-bottom: 8px;
+}
 .sheet-head .tag{
   width:44px; height:44px; border-radius:12px;
   display:flex; align-items:center; justify-content:center;
