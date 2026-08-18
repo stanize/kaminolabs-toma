@@ -84,7 +84,17 @@ function fmtEntryDate(iso){
   const isToday = d.toDateString() === today.toDateString();
   const timeStr = d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
   if (isToday) return `Hoy · ${timeStr}`;
-  return `${d.toLocaleDateString('es-ES', { day:'2-digit', month:'short' })} · ${timeStr}`;
+  return `${d.toLocaleDateString('es-ES', { weekday:'short', day:'2-digit', month:'short' })} · ${timeStr}`;
+}
+
+function fmtFullDate(dateInput){
+  const d = (dateInput instanceof Date) ? dateInput : parseDateOnly(dateInput);
+  return d.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+function parseDateOnly(dateStr){
+  const [y, m, d] = String(dateStr).split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
 function renderLastByType(){
@@ -841,7 +851,7 @@ function renderWeightList(){
 
   const latest = sorted[sorted.length - 1];
   $("#weightSub").textContent = latest
-    ? `Última: ${latest.weight_kg} kg · ${new Date(latest.weighed_at).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' })}`
+    ? `Última: ${latest.weight_kg} kg · ${fmtFullDate(latest.weighed_at)}`
     : "Aún no hay registros";
 
   const list = $("#weightList");
@@ -854,12 +864,12 @@ function renderWeightList(){
     const prev = reversed[i+1];
     let deltaHtml = "";
     if (prev){
-      const delta = wt.weight_kg - prev.weight_kg;
-      const cls = delta >= 0 ? "up" : "down";
-      const sign = delta >= 0 ? "+" : "";
-      deltaHtml = `<span class="wi-delta ${cls}">${sign}${delta.toFixed(2)} kg</span>`;
+      const deltaG = Math.round((wt.weight_kg - prev.weight_kg) * 1000);
+      const cls = deltaG >= 0 ? "up" : "down";
+      const sign = deltaG >= 0 ? "+" : "";
+      deltaHtml = `<span class="wi-delta ${cls}">${sign}${deltaG} g</span>`;
     }
-    const dateStr = new Date(wt.weighed_at).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' });
+    const dateStr = fmtFullDate(wt.weighed_at);
     const notesHtml = wt.notes ? `<div class="wi-notes">${escapeHtml(wt.notes)}</div>` : "";
     return `<div class="weight-item" data-id="${wt.id}">
       <div class="wi-left">
@@ -968,7 +978,7 @@ function renderQuestions(){
     return new Date(b.created_at) - new Date(a.created_at);
   });
   list.innerHTML = sorted.map(q => {
-    const dateStr = new Date(q.created_at).toLocaleDateString('es-ES', { day:'2-digit', month:'short' });
+    const dateStr = new Date(q.created_at).toLocaleDateString('es-ES', { weekday:'short', day:'2-digit', month:'short' });
     const answerHtml = q.answer
       ? `<div class="question-answer">${escapeHtml(q.answer)}</div>`
       : `<button class="question-answer-add" data-id="${q.id}">+ Añadir respuesta</button>`;
