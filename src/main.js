@@ -724,6 +724,154 @@ async function sbRequest(path, options = {}){
 
 let loadError = null;
 
+/* ---------- weight tracking ---------- */
+
+const WEIGHT_TABLE = "toma_weights";
+const weightOverlay = $("#weightOverlay");
+let weights = [];
+
+function renderWeightChart(sorted){
+  const wrap = $("#weightChartWrap");
+  const svg = $("#weightChart");
+  if (sorted.length < 2){
+    wrap.style.display = "none";
+    svg.innerHTML = "";
+    return;
+  }
+  wrap.style.display = "block";
+  const kgs = sorted.map(w => w.weight_kg);
+  const min = Math.min(...kgs), max = Math.max(...kgs);
+  const range = (max - min) || 1;
+  const w = 300, h = 90, pad = 8;
+  const points = sorted.map((wt, i) => {
+    const x = pad + (i / (sorted.length - 1)) * (w - pad*2);
+    const y = h - pad - ((wt.weight_kg - min) / range) * (h - pad*2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const dots = sorted.map((wt, i) => {
+    const [x, y] = points[i].split(',');
+    return `<circle cx="${x}" cy="${y}" r="2.6" fill="#e8b45c" />`;
+  }).join("");
+  svg.innerHTML = `
+    <polyline points="${points.join(' ')}" fill="none" stroke="#e8b45c" stroke-width="2" />
+    ${dots}
+  `;
+}
+
+function renderWeightList(){
+  const sorted = [...weights].sort((a,b) => new Date(a.weighed_at) - new Date(b.weighed_at));
+  renderWeightChart(sorted);
+
+  const latest = sorted[sorted.length - 1];
+  $("#weightSub").textContent = latest
+    ? `Última: ${latest.weight_kg} kg · ${new Date(latest.weighed_at).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' })}`
+    : "Aún no hay registros";
+
+  const list = $("#weightList");
+  const reversed = [...sorted].reverse();
+  if (reversed.length === 0){
+    list.innerHTML = `<div class="question-empty">Aún no hay pesos guardados.</div>`;
+    return;
+  }
+  list.innerHTML = reversed.map((wt, i) => {
+    const prev = reversed[i+1];
+    let deltaHtml = "";
+    if (prev){
+      const delta = wt.weight_kg - prev.weight_kg;
+      const cls = delta >= 0 ? "up" : "down";
+      const sign = delta >= 0 ? "+" : "";
+      deltaHtml = `<span class="wi-delta ${cls}">${sign}${delta.toFixed(2)} kg</span>`;
+    }
+    const dateStr = new Date(wt.weighed_at).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' });
+    const notesHtml = wt.notes ? `<div class="wi-notes">${escapeHtml(wt.notes)}</div>` : "";
+    return `<div class="weight-item" data-id="${wt.id}">
+      <div class="wi-left">
+        <div class="wi-kg">${wt.weight_kg} kg</div>
+        <div class="wi-date">${dateStr}</div>
+        ${notesHtml}
+      </div>
+      ${deltaHtml}
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll('.weight-item').forEach(el => {
+    el.addEventListener('click', () => deleteWeightPrompt(el.dataset.id));
+  });
+}
+
+async function loadWeights(){
+  if (!HAS_SUPABASE){ weights = []; return; }
+  try{
+    const rows = await sbRequest(`${WEIGHT_TABLE}?select=id,weighed_at,weight_kg,notes,created_at&order=weighed_at.desc&limit=200`);
+    weights = rows || [];
+  } catch(err){
+    console.error(err);
+    showToast("No se pudieron cargar los pesos");
+  }
+}
+
+async function addWeight(dateStr, kg, notes){
+  const local = { id: 'tmp-' + Date.now(), weighed_at: dateStr, weight_kg: kg, notes: notes || null, created_at: new Date().toISOString() };
+  weights.push(local);
+  renderWeightList();
+  if (!HAS_SUPABASE) return;
+  try{
+    const rows = await sbRequest(WEIGHT_TABLE, {
+      method: "POST",
+      body: JSON.stringify([{ weighed_at: dateStr, weight_kg: kg, notes: notes || null }])
+    });
+    const idx = weights.findIndex(w => w.id === local.id);
+    if (idx >= 0 && rows && rows[0]) weights[idx] = rows[0];
+    renderWeightList();
+  } catch(err){
+    console.error(err);
+    showToast("Guardado local (sin conexión)");
+  }
+}
+
+async function deleteWeight(id){
+  weights = weights.filter(w => w.id !== id);
+  renderWeightList();
+  if (!HAS_SUPABASE || id.startsWith('tmp-')) return;
+  try{
+    await sbRequest(`${WEIGHT_TABLE}?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
+  } catch(err){
+    console.error(err);
+    showToast("No se pudo eliminar en el servidor");
+  }
+}
+
+function deleteWeightPrompt(id){
+  if (confirm("¿Eliminar este registro de peso?")){
+    deleteWeight(id);
+  }
+}
+
+$("#btnWeight").addEventListener('click', async () => {
+  const now = new Date();
+  const parts = toLocalInputParts(now);
+  $("#wDate").value = parts.date;
+  $("#wKg").value = "";
+  $("#wNotes").value = "";
+  weightOverlay.classList.add("show");
+  renderWeightList();
+  await loadWeights();
+  renderWeightList();
+});
+$("#btnWeightClose").addEventListener('click', () => weightOverlay.classList.remove("show"));
+weightOverlay.addEventListener('click', (e) => { if (e.target === weightOverlay) weightOverlay.classList.remove("show"); });
+
+$("#btnWeightAdd").addEventListener('click', () => {
+  const dateStr = $("#wDate").value;
+  const kg = parseFloat($("#wKg").value);
+  if (!dateStr){ showToast("Falta la fecha"); return; }
+  if (isNaN(kg) || kg <= 0){ showToast("Indica un peso válido en kg"); return; }
+  const notes = $("#wNotes").value.trim();
+  addWeight(dateStr, kg, notes);
+  $("#wKg").value = "";
+  $("#wNotes").value = "";
+});
+
 /* ---------- pediatrician questions ---------- */
 
 const QUESTIONS_TABLE = "toma_questions";
