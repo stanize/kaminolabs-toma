@@ -111,12 +111,45 @@ function renderLastByType(){
   });
 }
 
+function getFeedGaps(limit){
+  const feeds = events.filter(e => FEED_TYPES.includes(e.type))
+    .sort((a,b) => new Date(a.occurred_at) - new Date(b.occurred_at));
+  const gaps = [];
+  for (let i = 1; i < feeds.length; i++){
+    const fromE = feeds[i-1];
+    const toE = feeds[i];
+    const hours = (new Date(toE.occurred_at) - new Date(fromE.occurred_at)) / 3600000;
+    gaps.push({ hours, from: fromE, to: toE });
+  }
+  return limit ? gaps.slice(-limit) : gaps;
+}
+
+function renderSparkline(){
+  const wrap = $("#countdownSpark");
+  const gaps = getFeedGaps(6);
+  if (gaps.length < 2){
+    wrap.innerHTML = `<div class="countdown-spark-empty">Frecuencia<br/>(pronto)</div>`;
+    return;
+  }
+  const w = 80, h = 60, pad = 4, barGap = 4;
+  const barW = (w - pad*2 - barGap*(gaps.length-1)) / gaps.length;
+  const max = Math.max(...gaps.map(g => g.hours), 1);
+  const bars = gaps.map((g, i) => {
+    const barH = Math.max((g.hours / max) * (h - pad*2), 3);
+    const x = pad + i * (barW + barGap);
+    const y = h - pad - barH;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" rx="2" fill="#e08a9b" opacity="${0.5 + 0.5*(i+1)/gaps.length}" />`;
+  }).join("");
+  wrap.innerHTML = `<svg viewBox="0 0 80 60" preserveAspectRatio="none">${bars}</svg>`;
+}
+
 function renderCountdown(){
   const feeds = events.filter(e => FEED_TYPES.includes(e.type))
     .sort((a,b)=> new Date(b.occurred_at)-new Date(a.occurred_at));
   const timeEl = $("#countdownTime");
   const subEl = $("#countdownSub");
   const labelEl = $("#countdownLabel");
+  renderSparkline();
 
   if (feeds.length === 0){
     timeEl.textContent = "—";
@@ -583,11 +616,77 @@ timerOverlay.addEventListener('click', (e) => {
 /* ---------- interval editor ---------- */
 
 const intervalOverlay = $("#intervalOverlay");
+const frequencyOverlay = $("#frequencyOverlay");
 
 $("#countdownCard").addEventListener('click', () => {
   $("#intervalInput").value = feedIntervalHours;
   openOverlay(intervalOverlay);
 });
+$("#countdownSpark").addEventListener('click', (e) => {
+  e.stopPropagation();
+  renderFrequencyDetail();
+  openOverlay(frequencyOverlay);
+});
+$("#btnFrequencyClose").addEventListener('click', () => frequencyOverlay.classList.remove("show"));
+frequencyOverlay.addEventListener('click', (e) => { if (e.target === frequencyOverlay) frequencyOverlay.classList.remove("show"); });
+
+function fmtGapDuration(hours){
+  const totalMin = Math.round(hours * 60);
+  const h = Math.floor(totalMin / 60), m = totalMin % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m} min`;
+}
+
+function renderFrequencyDetail(){
+  const gaps = getFeedGaps(20).slice().reverse(); // newest first
+  const chartGaps = getFeedGaps(12); // chronological for chart
+
+  const avg = chartGaps.length
+    ? chartGaps.reduce((s, g) => s + g.hours, 0) / chartGaps.length
+    : 0;
+  $("#frequencySub").textContent = chartGaps.length
+    ? `Promedio: ${fmtGapDuration(avg)} entre tomas`
+    : "Aún no hay suficientes datos";
+
+  const chart = $("#freqChart");
+  if (chartGaps.length < 2){
+    chart.innerHTML = "";
+  } else {
+    const w = 300, h = 120, pad = 10, barGap = 6;
+    const barW = (w - pad*2 - barGap*(chartGaps.length-1)) / chartGaps.length;
+    const max = Math.max(...chartGaps.map(g => g.hours), 1);
+    const bars = chartGaps.map((g, i) => {
+      const barH = Math.max((g.hours / max) * (h - pad*2 - 16), 3);
+      const x = pad + i * (barW + barGap);
+      const y = h - pad - barH;
+      const label = g.hours >= 1 ? `${g.hours.toFixed(1)}h` : `${Math.round(g.hours*60)}m`;
+      return `
+        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" rx="3" fill="#e08a9b" />
+        <text x="${(x+barW/2).toFixed(1)}" y="${(y-6).toFixed(1)}" font-size="9" fill="#a99fc0" text-anchor="middle">${label}</text>
+      `;
+    }).join("");
+    chart.innerHTML = bars;
+  }
+
+  const list = $("#freqList");
+  if (gaps.length === 0){
+    list.innerHTML = `<div class="question-empty">Necesitas al menos dos tomas o biberones registrados para ver la frecuencia.</div>`;
+    return;
+  }
+  list.innerHTML = gaps.map(g => {
+    const fromMeta = TYPES[g.from.type];
+    const toMeta = TYPES[g.to.type];
+    const fromTime = new Date(g.from.occurred_at).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+    const toTime = new Date(g.to.occurred_at).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+    const toDateStr = new Date(g.to.occurred_at).toLocaleDateString('es-ES', { weekday:'short', day:'2-digit', month:'short' });
+    return `<div class="freq-item">
+      <div class="fi-left">
+        <div class="fi-gap">${fmtGapDuration(g.hours)}</div>
+        <div class="fi-range">${toDateStr} · ${fromTime} → ${toTime}</div>
+      </div>
+      <div class="fi-tag">${fromMeta.glyph} → ${toMeta.glyph}</div>
+    </div>`;
+  }).join("");
+}
 $("#btnIntervalCancel").addEventListener('click', () => intervalOverlay.classList.remove("show"));
 intervalOverlay.addEventListener('click', (e) => { if (e.target === intervalOverlay) intervalOverlay.classList.remove("show"); });
 $("#btnIntervalSave").addEventListener('click', () => {

@@ -286,6 +286,9 @@ h1{ font-size:26px; font-weight:600; margin:0; letter-spacing:.01em; }
 /* countdown card */
 .countdown{
   width:100%;
+  display:flex;
+  align-items:stretch;
+  gap:12px;
   text-align:left;
   border:none;
   border-radius: var(--radius);
@@ -296,6 +299,28 @@ h1{ font-size:26px; font-weight:600; margin:0; letter-spacing:.01em; }
   color: var(--ink);
   cursor:pointer;
   font-family: inherit;
+}
+.countdown-main{ flex:1; min-width:0; }
+.countdown-spark{
+  flex-shrink:0;
+  width:88px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+  background: rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding:6px;
+  cursor:pointer;
+}
+.countdown-spark:active{ transform: scale(0.96); }
+.countdown-spark svg{ width:100%; height:100%; display:block; }
+.countdown-spark-empty{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:9px;
+  color: var(--ink-dim);
+  text-align:center;
+  line-height:1.3;
 }
 .countdown-label{
   font-family:'Helvetica Neue',Arial,sans-serif;
@@ -802,3 +827,35 @@ select#reportRange{
 }
 .weight-item .wi-delta.up{ color:#6fb8b0; }
 .weight-item .wi-delta.down{ color:#e08a9b; }
+
+/* feeding frequency detail */
+.freq-chart-wrap{
+  background: var(--bg-1);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding: 14px 12px 6px;
+  margin-bottom:18px;
+}
+.freq-chart-wrap svg{ width:100%; height:120px; display:block; }
+
+.freq-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background: var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding: 11px 12px;
+}
+.freq-item .fi-left{ display:flex; flex-direction:column; }
+.freq-item .fi-gap{ font-size:15px; font-weight:600; }
+.freq-item .fi-range{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:11px;
+  color: var(--ink-dim);
+  margin-top:2px;
+}
+.freq-item .fi-tag{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:16px;
+}

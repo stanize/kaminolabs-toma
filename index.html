@@ -30,11 +30,40 @@
 
   <div id="setupNote"></div>
 
-  <button class="countdown" id="countdownCard">
-    <div class="countdown-label" id="countdownLabel">Próxima toma</div>
-    <div class="countdown-time" id="countdownTime">—</div>
-    <div class="countdown-sub" id="countdownSub">Registra una toma para empezar</div>
-  </button>
+  <div class="countdown" id="countdownCard" role="button" tabindex="0">
+    <div class="countdown-main">
+      <div class="countdown-label" id="countdownLabel">Próxima toma</div>
+      <div class="countdown-time" id="countdownTime">—</div>
+      <div class="countdown-sub" id="countdownSub">Registra una toma para empezar</div>
+    </div>
+    <div class="countdown-spark" id="countdownSpark" role="button" tabindex="0" aria-label="Ver frecuencia de tomas">
+      <svg id="sparkSvg" viewBox="0 0 80 60" preserveAspectRatio="none"></svg>
+    </div>
+  </div>
+
+  <div class="overlay" id="frequencyOverlay">
+    <div class="sheet">
+      <div class="sheet-head">
+        <span class="tag" style="background:#3a222a;color:#e08a9b;">📶</span>
+        <div>
+          <h2>Frecuencia de tomas</h2>
+          <p id="frequencySub">Tiempo entre tomas y biberones</p>
+        </div>
+      </div>
+      <div class="sheet-body">
+
+      <div class="freq-chart-wrap">
+        <svg id="freqChart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
+      </div>
+
+      <div class="question-list" id="freqList"></div>
+
+      <div class="actions" style="margin-top:18px;">
+        <button class="btn btn-cancel" id="btnFrequencyClose">Cerrar</button>
+      </div>
+      </div>
+    </div>
+  </div>
 
   <div class="grid grid-2">
     <button class="btn-track btn-to" data-type="to">
