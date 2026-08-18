@@ -626,11 +626,15 @@ function renderQuestions(){
   });
   list.innerHTML = sorted.map(q => {
     const dateStr = new Date(q.created_at).toLocaleDateString('es-ES', { day:'2-digit', month:'short' });
+    const answerHtml = q.answer
+      ? `<div class="question-answer">${escapeHtml(q.answer)}</div>`
+      : `<button class="question-answer-add" data-id="${q.id}">+ Añadir respuesta</button>`;
     return `<div class="question-item ${q.is_checked ? 'checked' : ''}" data-id="${q.id}">
       <span class="question-check">✓</span>
       <div style="flex:1;">
         <div class="question-text">${escapeHtml(q.text)}</div>
         <div class="question-date">${dateStr}</div>
+        ${answerHtml}
       </div>
       <button class="question-delete" data-id="${q.id}">✕</button>
     </div>`;
@@ -648,12 +652,49 @@ function renderQuestions(){
       deleteQuestion(el.dataset.id);
     });
   });
+  list.querySelectorAll('.question-answer').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const id = e.target.closest('.question-item').dataset.id;
+      openAnswerEditor(id);
+    });
+  });
+  list.querySelectorAll('.question-answer-add').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openAnswerEditor(el.dataset.id);
+    });
+  });
+}
+
+function openAnswerEditor(id){
+  const q = questions.find(x => x.id === id);
+  if (!q) return;
+  const item = document.querySelector(`.question-item[data-id="${id}"]`);
+  const existing = item.querySelector('.question-answer, .question-answer-add');
+  const wrap = document.createElement('div');
+  wrap.className = 'question-answer-edit';
+  wrap.innerHTML = `
+    <textarea rows="2" placeholder="Respuesta del pediatra…">${q.answer ? escapeHtml(q.answer) : ''}</textarea>
+    <div class="question-answer-actions">
+      <button class="qa-cancel">Cancelar</button>
+      <button class="qa-save">Guardar</button>
+    </div>
+  `;
+  existing.replaceWith(wrap);
+  const textarea = wrap.querySelector('textarea');
+  textarea.focus();
+
+  wrap.querySelector('.qa-cancel').addEventListener('click', () => renderQuestions());
+  wrap.querySelector('.qa-save').addEventListener('click', () => {
+    const val = textarea.value.trim();
+    saveAnswer(id, val);
+  });
 }
 
 async function loadQuestions(){
   if (!HAS_SUPABASE){ questions = []; return; }
   try{
-    const rows = await sbRequest(`${QUESTIONS_TABLE}?select=id,text,is_checked,created_at&order=created_at.desc&limit=200`);
+    const rows = await sbRequest(`${QUESTIONS_TABLE}?select=id,text,answer,is_checked,created_at&order=created_at.desc&limit=200`);
     questions = rows || [];
   } catch(err){
     console.error(err);
@@ -694,6 +735,23 @@ async function toggleQuestion(id){
   } catch(err){
     console.error(err);
     showToast("No se pudo sincronizar");
+  }
+}
+
+async function saveAnswer(id, answer){
+  const q = questions.find(x => x.id === id);
+  if (!q) return;
+  q.answer = answer || null;
+  renderQuestions();
+  if (!HAS_SUPABASE || id.startsWith('tmp-')) return;
+  try{
+    await sbRequest(`${QUESTIONS_TABLE}?id=eq.${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ answer: q.answer })
+    });
+  } catch(err){
+    console.error(err);
+    showToast("No se pudo sincronizar la respuesta");
   }
 }
 

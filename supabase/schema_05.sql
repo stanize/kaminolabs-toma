@@ -5,6 +5,7 @@
 create table if not exists toma_questions (
   id uuid primary key default gen_random_uuid(),
   text text not null,
+  answer text,
   is_checked boolean not null default false,
   created_at timestamptz not null default now()
 );
