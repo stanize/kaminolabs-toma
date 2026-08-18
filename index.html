@@ -102,6 +102,7 @@
         <p id="reportRangeLabel">Hoy</p>
       </div>
     </div>
+    <div class="sheet-body">
 
     <div class="field" style="margin-bottom:18px;">
       <label>Rango</label>
@@ -120,6 +121,7 @@
     <div class="actions" style="margin-top:18px;">
       <button class="btn btn-cancel" id="btnReportClose">Cerrar</button>
     </div>
+    </div>
   </div>
 </div>
 
@@ -132,11 +134,13 @@
         <p id="typeDetailSub"></p>
       </div>
     </div>
+    <div class="sheet-body">
 
-    <div class="log" id="typeDetailLog" style="max-height:420px; overflow-y:auto;"></div>
+    <div class="log" id="typeDetailLog"></div>
 
     <div class="actions" style="margin-top:18px;">
       <button class="btn btn-cancel" id="btnTypeDetailClose">Cerrar</button>
+    </div>
     </div>
   </div>
 </div>
@@ -150,6 +154,7 @@
         <p id="weightSub">Aún no hay registros</p>
       </div>
     </div>
+    <div class="sheet-body">
 
     <div class="weight-chart-wrap" id="weightChartWrap" style="display:none;">
       <svg id="weightChart" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
@@ -164,6 +169,7 @@
     <div class="actions" style="margin-top:18px;">
       <button class="btn btn-cancel" id="btnWeightClose">Cerrar</button>
     </div>
+    </div>
   </div>
 </div>
 
@@ -176,6 +182,7 @@
         <p>Se van marcando cuando ya se preguntaron</p>
       </div>
     </div>
+    <div class="sheet-body">
 
     <div class="question-add-row">
       <input type="text" id="qNewText" placeholder="Ej. ¿Es normal que llore antes de cada toma?" />
@@ -186,6 +193,7 @@
 
     <div class="actions" style="margin-top:18px;">
       <button class="btn btn-cancel" id="btnQuestionsClose">Cerrar</button>
+    </div>
     </div>
   </div>
 </div>
@@ -199,6 +207,7 @@
         <p>Usado para calcular la cuenta regresiva</p>
       </div>
     </div>
+    <div class="sheet-body">
     <div class="field" style="margin-bottom:18px;">
       <label>Horas</label>
       <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" id="intervalInput" />
@@ -206,6 +215,7 @@
     <div class="actions">
       <button class="btn btn-cancel" id="btnIntervalCancel">Cancelar</button>
       <button class="btn btn-confirm" id="btnIntervalSave">Guardar</button>
+    </div>
     </div>
   </div>
 </div>
@@ -219,6 +229,7 @@
         <p id="sheetSub">Ajusta la fecha y hora si hace falta</p>
       </div>
     </div>
+    <div class="sheet-body">
 
     <div class="field-row">
       <div class="field">
@@ -264,6 +275,7 @@
       <button class="btn btn-confirm" id="btnConfirm">Confirmar</button>
     </div>
     <button class="btn-delete" id="btnDelete" style="display:none;">Eliminar registro</button>
+    </div>
   </div>
 </div>
 
@@ -276,6 +288,7 @@
         <p id="timerSub">Elige la hora de inicio</p>
       </div>
     </div>
+    <div class="sheet-body">
 
     <div class="field-row" id="timerStartFields">
       <div class="field">
@@ -320,6 +333,7 @@
       <button class="btn btn-confirm" id="btnTimerStart">Iniciar</button>
       <button class="btn btn-stop" id="btnTimerStop" style="display:none;">Detener</button>
       <button class="btn btn-confirm" id="btnTimerSaveReview" style="display:none;">Guardar</button>
+    </div>
     </div>
   </div>
 </div>

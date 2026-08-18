@@ -35,8 +35,8 @@ const toast = $("#toast");
 
 function openOverlay(el){
   el.classList.add("show");
-  const sheet = el.querySelector('.sheet');
-  if (sheet) sheet.scrollTop = 0;
+  const body = el.querySelector('.sheet-body');
+  if (body) body.scrollTop = 0;
 }
 
 function showToast(msg){
