@@ -178,6 +178,9 @@ h1{ font-size:26px; font-weight:600; margin:0; letter-spacing:.01em; }
   transform: translateY(16px);
   transition: transform .18s ease;
   border-top:1px solid var(--line);
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .overlay.show .sheet{ transform: translateY(0); }
 .sheet-head{ display:flex; align-items:center; gap:12px; margin-bottom: 18px; }
@@ -207,7 +210,7 @@ h1{ font-size:26px; font-weight:600; margin:0; letter-spacing:.01em; }
   border-radius:12px;
   padding: 12px 12px;
   color: var(--ink);
-  font-size:15px;
+  font-size:16px;
   font-family: 'Helvetica Neue', Arial, sans-serif;
   outline:none;
 }
@@ -384,7 +387,7 @@ select#reportRange{
   border-radius:12px;
   padding: 12px 12px;
   color: var(--ink);
-  font-size:14px;
+  font-size:16px;
   font-family: 'Helvetica Neue', Arial, sans-serif;
   outline:none;
   resize: vertical;
@@ -575,7 +578,7 @@ select#reportRange{
   border-radius:12px;
   padding: 11px 12px;
   color: var(--ink);
-  font-size:14px;
+  font-size:16px;
   font-family: 'Helvetica Neue', Arial, sans-serif;
   outline:none;
 }
