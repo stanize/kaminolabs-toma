@@ -197,15 +197,16 @@ $("#btnToggleLog").addEventListener('click', () => {
   renderLog();
 });
 
+const WEIGHT_META = { label: "Peso", glyph: "⚖️", color: "#e9e4f0", soft: "#241c3d" };
+
 function openSheetForNew(type){
   editingId = null;
   pendingType = type;
-  const meta = TYPES[type];
+  const meta = type === "we" ? WEIGHT_META : TYPES[type];
   $("#sheetTag").textContent = meta.glyph;
   $("#sheetTag").style.background = meta.soft;
   $("#sheetTag").style.color = meta.color;
   $("#sheetTitle").textContent = meta.label;
-  $("#sheetSub").textContent = "Ajusta la fecha y hora si hace falta";
   $("#btnDelete").style.display = "none";
   $("#fDurationRow").style.display = "none";
   $("#fMlRow").style.display = "none";
@@ -214,6 +215,20 @@ function openSheetForNew(type){
   $("#fDate").value = parts.date;
   $("#fTime").value = parts.time;
   $("#fNotes").value = "";
+
+  if (type === "we"){
+    $("#sheetSub").textContent = "Registra el peso de hoy";
+    $("#fKgRow").style.display = "block";
+    $("#fKg").value = "";
+    $("#fTime").closest('.field').style.display = "none";
+    $("#fQuickRow").style.display = "none";
+  } else {
+    $("#sheetSub").textContent = "Ajusta la fecha y hora si hace falta";
+    $("#fKgRow").style.display = "none";
+    $("#fTime").closest('.field').style.display = "block";
+    $("#fQuickRow").style.display = "flex";
+  }
+
   overlay.classList.add("show");
 }
 
@@ -229,6 +244,9 @@ function openSheetForEdit(id){
   $("#sheetTitle").textContent = meta.label;
   $("#sheetSub").textContent = "Editar registro";
   $("#btnDelete").style.display = "block";
+  $("#fKgRow").style.display = "none";
+  $("#fTime").closest('.field').style.display = "block";
+  $("#fQuickRow").style.display = "flex";
   const parts = toLocalInputParts(new Date(e.occurred_at));
   $("#fDate").value = parts.date;
   $("#fTime").value = parts.time;
@@ -251,8 +269,12 @@ function openSheetForEdit(id){
 
 function closeSheet(){
   overlay.classList.remove("show");
+  const wasWeight = pendingType === "we" && !editingId;
   editingId = null;
   pendingType = null;
+  if (wasWeight){
+    weightOverlay.classList.add("show");
+  }
 }
 
 document.querySelectorAll('.btn-track').forEach(btn => {
@@ -281,8 +303,21 @@ document.querySelectorAll('.quick').forEach(q => {
 
 $("#btnConfirm").addEventListener('click', async () => {
   const dateStr = $("#fDate").value;
+  if (!dateStr){ showToast("Falta la fecha"); return; }
+
+  if (pendingType === "we" && !editingId){
+    const kg = parseDecimal($("#fKg").value);
+    if (isNaN(kg) || kg <= 0){ showToast("Indica un peso válido en kg"); return; }
+    const notes = $("#fNotes").value.trim();
+    await addWeight(dateStr, kg, notes);
+    showToast("Peso registrado");
+    closeSheet();
+    renderWeightList();
+    return;
+  }
+
   const timeStr = $("#fTime").value;
-  if (!dateStr || !timeStr){ showToast("Falta fecha u hora"); return; }
+  if (!timeStr){ showToast("Falta la hora"); return; }
   const occurred = fromLocalInputParts(dateStr, timeStr);
   const iso = occurred.toISOString();
   const notes = $("#fNotes").value.trim();
@@ -854,11 +889,6 @@ function deleteWeightPrompt(id){
 }
 
 $("#btnWeight").addEventListener('click', async () => {
-  const now = new Date();
-  const parts = toLocalInputParts(now);
-  $("#wDate").value = parts.date;
-  $("#wKg").value = "";
-  $("#wNotes").value = "";
   weightOverlay.classList.add("show");
   renderWeightList();
   await loadWeights();
@@ -868,14 +898,8 @@ $("#btnWeightClose").addEventListener('click', () => weightOverlay.classList.rem
 weightOverlay.addEventListener('click', (e) => { if (e.target === weightOverlay) weightOverlay.classList.remove("show"); });
 
 $("#btnWeightAdd").addEventListener('click', () => {
-  const dateStr = $("#wDate").value;
-  const kg = parseDecimal($("#wKg").value);
-  if (!dateStr){ showToast("Falta la fecha"); return; }
-  if (isNaN(kg) || kg <= 0){ showToast("Indica un peso válido en kg"); return; }
-  const notes = $("#wNotes").value.trim();
-  addWeight(dateStr, kg, notes);
-  $("#wKg").value = "";
-  $("#wNotes").value = "";
+  weightOverlay.classList.remove("show");
+  openSheetForNew("we");
 });
 
 /* ---------- pediatrician questions ---------- */

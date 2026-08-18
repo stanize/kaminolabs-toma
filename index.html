@@ -155,24 +155,8 @@
       <svg id="weightChart" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
     </div>
 
-    <div class="field-row">
-      <div class="field">
-        <label>Fecha</label>
-        <input type="date" id="wDate" />
-      </div>
-      <div class="field">
-        <label>Peso (kg)</label>
-        <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" id="wKg" placeholder="Ej. 4.25" />
-      </div>
-    </div>
-
-    <div class="field" style="margin-bottom:18px;">
-      <label>Notas (opcional)</label>
-      <textarea id="wNotes" rows="2" placeholder="Ej. control de rutina"></textarea>
-    </div>
-
     <div class="actions" style="margin-bottom:18px;">
-      <button class="btn btn-confirm" id="btnWeightAdd">Guardar peso</button>
+      <button class="btn btn-confirm" id="btnWeightAdd">+ Añadir peso</button>
     </div>
 
     <div class="question-list" id="weightList"></div>
@@ -252,12 +236,17 @@
       <input type="number" id="fMl" min="0" step="1" />
     </div>
 
+    <div class="field" id="fKgRow" style="margin-bottom:14px; display:none;">
+      <label>Peso (kg)</label>
+      <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" id="fKg" placeholder="Ej. 4.25" />
+    </div>
+
     <div class="field" id="fDurationRow" style="margin-bottom:14px; display:none;">
       <label id="fDurationLabel">Duración (minutos)</label>
       <input type="number" id="fDuration" min="0" step="1" />
     </div>
 
-    <div class="quick-row">
+    <div class="quick-row" id="fQuickRow">
       <span class="quick" data-mins="0">Ahora</span>
       <span class="quick" data-mins="-10">Hace 10 min</span>
       <span class="quick" data-mins="-30">Hace 30 min</span>
