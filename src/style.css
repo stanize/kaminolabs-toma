@@ -459,3 +459,5 @@ select#reportRange{
   color: #e8b6b6;
 }
 .setup-note.error-note code{ color:#e8b45c; }
+
+#btnToggleLog{ padding-top: 12px; }

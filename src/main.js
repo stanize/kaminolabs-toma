@@ -127,18 +127,24 @@ function renderCountdown(){
   }
 }
 
+let logExpanded = false;
+
 function renderLog(){
   const log = $("#log");
   const sorted = [...events].sort((a,b)=> new Date(b.occurred_at)-new Date(a.occurred_at));
+  const toggleBtn = $("#btnToggleLog");
   if (sorted.length === 0){
     if (loadError){
       log.innerHTML = `<div class="empty">No se pudieron cargar los registros.<br/>Revisa el aviso de arriba.</div>`;
     } else {
       log.innerHTML = `<div class="empty">Aún no hay registros.<br/>Toca un botón de arriba para empezar.</div>`;
     }
+    toggleBtn.style.display = "none";
     return;
   }
-  log.innerHTML = sorted.slice(0, 5).map(e => {
+
+  const visible = logExpanded ? sorted : sorted.slice(0, 5);
+  log.innerHTML = visible.map(e => {
     const meta = TYPES[e.type];
     const noteHtml = e.notes ? `<div class="n">${escapeHtml(e.notes)}</div>` : "";
     const durationHtml = e.duration_seconds ? ` · ${fmtClock(e.duration_seconds)}` : "";
@@ -156,6 +162,13 @@ function renderLog(){
   log.querySelectorAll('.entry').forEach(el => {
     el.addEventListener('click', () => openSheetForEdit(el.dataset.id));
   });
+
+  if (sorted.length > 5){
+    toggleBtn.style.display = "block";
+    toggleBtn.textContent = logExpanded ? "Ver menos" : `Ver todos (${sorted.length})`;
+  } else {
+    toggleBtn.style.display = "none";
+  }
 }
 
 function escapeHtml(str){
@@ -165,6 +178,11 @@ function escapeHtml(str){
 }
 
 function renderAll(){ renderLastByType(); renderLog(); renderCountdown(); }
+
+$("#btnToggleLog").addEventListener('click', () => {
+  logExpanded = !logExpanded;
+  renderLog();
+});
 
 function openSheetForNew(type){
   editingId = null;
