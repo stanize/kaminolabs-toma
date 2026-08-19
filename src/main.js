@@ -363,13 +363,23 @@ document.querySelectorAll('.btn-track').forEach(btn => {
 $("#btnCancel").addEventListener('click', closeSheet);
 overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSheet(); });
 
-document.querySelectorAll('.quick').forEach(q => {
+document.querySelectorAll('#fQuickRow .quick').forEach(q => {
   q.addEventListener('click', () => {
     const mins = parseInt(q.dataset.mins, 10);
     const d = new Date(Date.now() + mins*60000);
     const parts = toLocalInputParts(d);
     $("#fDate").value = parts.date;
     $("#fTime").value = parts.time;
+  });
+});
+
+document.querySelectorAll('#timerQuickRow .quick').forEach(q => {
+  q.addEventListener('click', () => {
+    const mins = parseInt(q.dataset.mins, 10);
+    const d = new Date(Date.now() + mins*60000);
+    const parts = toLocalInputParts(d);
+    $("#tStartDate").value = parts.date;
+    $("#tStartTime").value = parts.time;
   });
 });
 
@@ -471,6 +481,7 @@ function openTimerForNew(type){
   $("#timerTitle").textContent = meta.label;
   $("#timerSub").textContent = "Elige la hora de inicio";
   $("#timerStartFields").style.display = "flex";
+  $("#timerQuickRow").style.display = "flex";
   $("#timerMlRow").style.display = type === "bi" ? "block" : "none";
   $("#timerManualDurationRow").style.display = "none";
   $("#timerDisplay").style.display = "none";
@@ -554,6 +565,7 @@ $("#btnTimerStart").addEventListener('click', async () => {
 
   timerState = { type, startDate, ml, tickId: null };
   $("#timerStartFields").style.display = "none";
+  $("#timerQuickRow").style.display = "none";
   $("#timerMlRow").style.display = "none";
   $("#btnTimerManualToggle").style.display = "none";
   $("#timerDisplay").style.display = "block";
