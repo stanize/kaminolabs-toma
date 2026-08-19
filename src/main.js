@@ -39,10 +39,11 @@ function openOverlay(el){
   if (body) body.scrollTop = 0;
 }
 
-function showToast(msg){
+function showToast(msg, duration){
   toast.textContent = msg;
   toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 1600);
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove("show"), duration || 1600);
 }
 
 function fmtDateHeader(){
@@ -1421,7 +1422,7 @@ $("#btnCheckUpdates").addEventListener('click', async () => {
     window.location.reload();
     return;
   }
-  showToast("Buscando actualizaciones…");
+  showToast("Buscando actualizaciones…", 4500);
   try{
     const reg = await navigator.serviceWorker.getRegistration();
     if (!reg){
@@ -1433,15 +1434,15 @@ $("#btnCheckUpdates").addEventListener('click', async () => {
     // deciding whether one was actually found.
     setTimeout(() => {
       if (reg.waiting || reg.installing){
-        showToast("Actualizando…");
+        showToast("Actualizando…", 4500);
         // controllerchange listener (registered at page load) reloads once
         // the new worker takes over.
       } else {
-        showToast("Ya tienes la última versión");
+        showToast("Ya tienes la última versión", 4500);
       }
     }, 1200);
   } catch(err){
     console.error(err);
-    showToast("No se pudo comprobar. Reintenta más tarde.");
+    showToast("No se pudo comprobar. Reintenta más tarde.", 4500);
   }
 });
