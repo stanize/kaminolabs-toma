@@ -733,6 +733,9 @@ const RANGE_LABELS = {
 };
 
 let customRangeHours = 48;
+let customMode = "hours"; // "hours" | "range"
+let customRangeStart = null;
+let customRangeEnd = null;
 
 function rangeStartEnd(rangeKey){
   const now = new Date();
@@ -754,6 +757,9 @@ function rangeStartEnd(rangeKey){
     return [new Date(now.getTime() - 24*3600000), now];
   }
   if (rangeKey === "custom"){
+    if (customMode === "range" && customRangeStart && customRangeEnd){
+      return [customRangeStart, customRangeEnd];
+    }
     return [new Date(now.getTime() - customRangeHours*3600000), now];
   }
   return [new Date(0), new Date(8640000000000000)]; // all
@@ -761,7 +767,15 @@ function rangeStartEnd(rangeKey){
 
 let currentReportRange = "today";
 
+function fmtShortDateTime(d){
+  return d.toLocaleDateString('es-ES', { day:'2-digit', month:'short' }) + ' ' +
+    d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+}
+
 function customRangeLabel(){
+  if (customMode === "range" && customRangeStart && customRangeEnd){
+    return `${fmtShortDateTime(customRangeStart)} → ${fmtShortDateTime(customRangeEnd)}`;
+  }
   if (customRangeHours % 24 === 0 && customRangeHours >= 24){
     const days = customRangeHours / 24;
     return `Últimas ${days} día${days === 1 ? '' : 's'}`;
@@ -777,7 +791,9 @@ function renderReport(rangeKey){
   $("#rangeList").querySelectorAll('.range-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.range === rangeKey);
   });
-  $("#customRangeRow").style.display = rangeKey === "custom" ? "flex" : "none";
+  $("#btnCustomModeToggle").style.display = rangeKey === "custom" ? "block" : "none";
+  $("#customRangeRow").style.display = (rangeKey === "custom" && customMode === "hours") ? "flex" : "none";
+  $("#customDateRange").style.display = (rangeKey === "custom" && customMode === "range") ? "block" : "none";
 
   const counts = {};
   Object.keys(TYPES).forEach(t => counts[t] = 0);
@@ -879,8 +895,10 @@ $("#rangeList").querySelectorAll('.range-item').forEach(btn => {
   btn.addEventListener('click', () => {
     if (btn.dataset.range === "custom"){
       renderReport("custom");
-      $("#customRangeHours").value = customRangeHours;
-      $("#customRangeHours").focus();
+      if (customMode === "hours"){
+        $("#customRangeHours").value = customRangeHours;
+        $("#customRangeHours").focus();
+      }
       return;
     }
     renderReport(btn.dataset.range);
@@ -900,6 +918,49 @@ $("#customRangeHours").addEventListener('keydown', (e) => {
     e.preventDefault();
     $("#btnCustomRangeApply").click();
   }
+});
+
+$("#btnCustomModeToggle").addEventListener('click', () => {
+  customMode = customMode === "hours" ? "range" : "hours";
+  $("#btnCustomModeToggle").textContent = customMode === "hours"
+    ? "Usar rango de fechas exacto"
+    : "Usar horas hacia atrás";
+
+  if (customMode === "range"){
+    const now = new Date();
+    if (!customRangeStart || !customRangeEnd){
+      customRangeStart = new Date(now.getTime() - 24*3600000);
+      customRangeEnd = now;
+    }
+    const fromParts = toLocalInputParts(customRangeStart);
+    const toParts = toLocalInputParts(customRangeEnd);
+    $("#customFromDate").value = fromParts.date;
+    $("#customFromTime").value = fromParts.time;
+    $("#customToDate").value = toParts.date;
+    $("#customToTime").value = toParts.time;
+  }
+
+  renderReport("custom");
+});
+
+$("#btnCustomDateApply").addEventListener('click', () => {
+  const fromDate = $("#customFromDate").value;
+  const fromTime = $("#customFromTime").value;
+  const toDate = $("#customToDate").value;
+  const toTime = $("#customToTime").value;
+  if (!fromDate || !fromTime || !toDate || !toTime){
+    showToast("Completa fecha y hora de inicio y fin");
+    return;
+  }
+  const start = fromLocalInputParts(fromDate, fromTime);
+  const end = fromLocalInputParts(toDate, toTime);
+  if (start >= end){
+    showToast("La fecha de inicio debe ser anterior a la de fin");
+    return;
+  }
+  customRangeStart = start;
+  customRangeEnd = end;
+  renderReport("custom");
 });
 
 /* ---------- type detail (full list for one event type in current range) ---------- */

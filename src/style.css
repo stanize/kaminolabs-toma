@@ -892,3 +892,9 @@ select#reportRange{
   cursor:pointer;
 }
 .check-updates-link:active{ opacity:0.85; }
+
+/* custom date range mode */
+.custom-date-range{
+  margin-top:10px;
+}
+.custom-date-range .field-row{ margin-bottom:0; }
