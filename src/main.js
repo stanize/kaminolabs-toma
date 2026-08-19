@@ -1413,3 +1413,35 @@ function renderSetupNote(){
   renderAll();
   setInterval(renderAll, 60000);
 })();
+
+/* ---------- manual "check for updates" ---------- */
+
+$("#btnCheckUpdates").addEventListener('click', async () => {
+  if (!('serviceWorker' in navigator)){
+    window.location.reload();
+    return;
+  }
+  showToast("Buscando actualizaciones…");
+  try{
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg){
+      window.location.reload();
+      return;
+    }
+    await reg.update();
+    // Give the browser a moment to detect/install any new worker before
+    // deciding whether one was actually found.
+    setTimeout(() => {
+      if (reg.waiting || reg.installing){
+        showToast("Actualizando…");
+        // controllerchange listener (registered at page load) reloads once
+        // the new worker takes over.
+      } else {
+        showToast("Ya tienes la última versión");
+      }
+    }, 1200);
+  } catch(err){
+    console.error(err);
+    showToast("No se pudo comprobar. Reintenta más tarde.");
+  }
+});

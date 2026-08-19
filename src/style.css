@@ -876,3 +876,19 @@ select#reportRange{
   font-weight:600;
   cursor:pointer;
 }
+
+/* check for updates link */
+.check-updates-link{
+  display:block;
+  width:100%;
+  text-align:center;
+  background:none;
+  border:none;
+  color: var(--ink-dim);
+  opacity:0.55;
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  font-size:10.5px;
+  padding: 18px 0 4px;
+  cursor:pointer;
+}
+.check-updates-link:active{ opacity:0.85; }
