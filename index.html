@@ -153,6 +153,12 @@
         <span class="quick range-item" data-range="12h">Últimas 12 horas</span>
         <span class="quick range-item" data-range="24h">Últimas 24 horas</span>
         <span class="quick range-item" data-range="all">Informe completo</span>
+        <span class="quick range-item" data-range="custom">Personalizado</span>
+      </div>
+      <div class="custom-range-row" id="customRangeRow" style="display:none;">
+        <input type="number" id="customRangeHours" min="1" max="8760" step="1" placeholder="Ej. 48" />
+        <span class="custom-range-suffix">horas</span>
+        <button id="btnCustomRangeApply">Aplicar</button>
       </div>
     </div>
 

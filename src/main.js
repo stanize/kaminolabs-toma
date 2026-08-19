@@ -731,6 +731,8 @@ const RANGE_LABELS = {
   all: "Informe completo"
 };
 
+let customRangeHours = 48;
+
 function rangeStartEnd(rangeKey){
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -750,19 +752,31 @@ function rangeStartEnd(rangeKey){
   if (rangeKey === "24h"){
     return [new Date(now.getTime() - 24*3600000), now];
   }
+  if (rangeKey === "custom"){
+    return [new Date(now.getTime() - customRangeHours*3600000), now];
+  }
   return [new Date(0), new Date(8640000000000000)]; // all
 }
 
 let currentReportRange = "today";
 
+function customRangeLabel(){
+  if (customRangeHours % 24 === 0 && customRangeHours >= 24){
+    const days = customRangeHours / 24;
+    return `Últimas ${days} día${days === 1 ? '' : 's'}`;
+  }
+  return `Últimas ${customRangeHours} horas`;
+}
+
 function renderReport(rangeKey){
   currentReportRange = rangeKey;
   const [start, end] = rangeStartEnd(rangeKey);
-  $("#reportRangeLabel").textContent = RANGE_LABELS[rangeKey];
+  $("#reportRangeLabel").textContent = rangeKey === "custom" ? customRangeLabel() : RANGE_LABELS[rangeKey];
 
   $("#rangeList").querySelectorAll('.range-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.range === rangeKey);
   });
+  $("#customRangeRow").style.display = rangeKey === "custom" ? "flex" : "none";
 
   const counts = {};
   Object.keys(TYPES).forEach(t => counts[t] = 0);
@@ -861,7 +875,30 @@ $("#btnReport").addEventListener('click', () => {
 $("#btnReportClose").addEventListener('click', () => reportOverlay.classList.remove("show"));
 reportOverlay.addEventListener('click', (e) => { if (e.target === reportOverlay) reportOverlay.classList.remove("show"); });
 $("#rangeList").querySelectorAll('.range-item').forEach(btn => {
-  btn.addEventListener('click', () => renderReport(btn.dataset.range));
+  btn.addEventListener('click', () => {
+    if (btn.dataset.range === "custom"){
+      renderReport("custom");
+      $("#customRangeHours").value = customRangeHours;
+      $("#customRangeHours").focus();
+      return;
+    }
+    renderReport(btn.dataset.range);
+  });
+});
+$("#btnCustomRangeApply").addEventListener('click', () => {
+  const hours = parseInt($("#customRangeHours").value, 10);
+  if (isNaN(hours) || hours < 1 || hours > 8760){
+    showToast("Indica un número de horas entre 1 y 8760");
+    return;
+  }
+  customRangeHours = hours;
+  renderReport("custom");
+});
+$("#customRangeHours").addEventListener('keydown', (e) => {
+  if (e.key === 'Enter'){
+    e.preventDefault();
+    $("#btnCustomRangeApply").click();
+  }
 });
 
 /* ---------- type detail (full list for one event type in current range) ---------- */
@@ -879,7 +916,8 @@ function openTypeDetail(type){
   $("#typeDetailTag").style.background = meta.soft;
   $("#typeDetailTag").style.color = meta.color;
   $("#typeDetailTitle").textContent = meta.label;
-  $("#typeDetailSub").textContent = `${RANGE_LABELS[currentReportRange]} · ${filtered.length} registro${filtered.length === 1 ? '' : 's'}`;
+  const rangeLabel = currentReportRange === "custom" ? customRangeLabel() : RANGE_LABELS[currentReportRange];
+  $("#typeDetailSub").textContent = `${rangeLabel} · ${filtered.length} registro${filtered.length === 1 ? '' : 's'}`;
 
   const log = $("#typeDetailLog");
   if (filtered.length === 0){
