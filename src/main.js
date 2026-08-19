@@ -294,7 +294,7 @@ function openSheetForEdit(id){
   $("#btnDelete").style.display = "block";
   $("#fKgRow").style.display = "none";
   $("#fTime").closest('.field').style.display = "block";
-  $("#fQuickRow").style.display = "flex";
+  $("#fQuickRow").style.display = "none";
   const parts = toLocalInputParts(new Date(e.occurred_at));
   $("#fDate").value = parts.date;
   $("#fTime").value = parts.time;
