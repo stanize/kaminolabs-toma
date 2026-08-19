@@ -202,13 +202,12 @@ function renderLog(){
   log.innerHTML = visible.map(e => {
     const meta = TYPES[e.type];
     const noteHtml = e.notes ? `<div class="n">${escapeHtml(e.notes)}</div>` : "";
-    const durationHtml = e.duration_seconds ? ` · ${fmtClock(e.duration_seconds)}` : "";
-    const mlHtml = e.ml_amount != null ? ` · ${e.ml_amount}ml` : "";
+    const titleSuffix = fmtEntryTitleSuffix(e);
     return `<div class="entry" data-id="${e.id}">
       <span class="tag" style="background:${meta.soft};color:${meta.color}">${meta.glyph}</span>
       <div class="info">
-        <div class="t">${meta.label}</div>
-        <div class="d">${fmtEntryDate(e.occurred_at)}${durationHtml}${mlHtml}</div>
+        <div class="t">${meta.label}${titleSuffix}</div>
+        <div class="d">${fmtEntryDate(e.occurred_at)}</div>
         ${noteHtml}
       </div>
       <div class="ago">${relTime(e.occurred_at)}</div>
@@ -443,6 +442,15 @@ const timerOverlay = $("#timerOverlay");
 let timerState = null; // { type, startDate, tickId }
 let pendingTimerType = null;
 let manualMode = false;
+
+function fmtEntryTitleSuffix(e){
+  if (e.type === "bi" && e.ml_amount != null) return ` (${e.ml_amount} ml)`;
+  if (FEED_TYPES.includes(e.type) && e.duration_seconds){
+    const mins = Math.round(e.duration_seconds / 60);
+    return ` (${mins} min)`;
+  }
+  return "";
+}
 
 function fmtClock(totalSeconds){
   const h = Math.floor(totalSeconds/3600);
@@ -867,13 +875,12 @@ function openTypeDetail(type){
   } else {
     log.innerHTML = filtered.map(e => {
       const noteHtml = e.notes ? `<div class="n">${escapeHtml(e.notes)}</div>` : "";
-      const durationHtml = e.duration_seconds ? ` · ${fmtClock(e.duration_seconds)}` : "";
-      const mlHtml = e.ml_amount != null ? ` · ${e.ml_amount}ml` : "";
+      const titleSuffix = fmtEntryTitleSuffix(e);
       return `<div class="entry" data-id="${e.id}">
         <span class="tag" style="background:${meta.soft};color:${meta.color}">${meta.glyph}</span>
         <div class="info">
-          <div class="t">${meta.label}</div>
-          <div class="d">${fmtEntryDate(e.occurred_at)}${durationHtml}${mlHtml}</div>
+          <div class="t">${meta.label}${titleSuffix}</div>
+          <div class="d">${fmtEntryDate(e.occurred_at)}</div>
           ${noteHtml}
         </div>
         <div class="ago">${relTime(e.occurred_at)}</div>
