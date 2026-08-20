@@ -278,6 +278,11 @@ function openSheetForNew(type){
     $("#fQuickRow").style.display = "flex";
   }
 
+  if (type === "bi"){
+    $("#fMlRow").style.display = "block";
+    $("#fMl").value = "";
+  }
+
   openOverlay(overlay);
 }
 
@@ -300,9 +305,9 @@ function openSheetForEdit(id){
   $("#fDate").value = parts.date;
   $("#fTime").value = parts.time;
   $("#fNotes").value = e.notes || "";
-  if (FEED_TYPES.includes(e.type)){
+  if (e.type === "to"){
     $("#fDurationRow").style.display = "block";
-    $("#fDurationLabel").textContent = e.type === "bi" ? "Duración (minutos, opcional)" : "Duración (minutos)";
+    $("#fDurationLabel").textContent = "Duración (minutos)";
     $("#fDuration").value = e.duration_seconds ? Math.round(e.duration_seconds/60) : "";
   } else {
     $("#fDurationRow").style.display = "none";
@@ -353,7 +358,7 @@ function closeSheet(){
 document.querySelectorAll('.btn-track').forEach(btn => {
   btn.addEventListener('click', () => {
     const type = btn.dataset.type;
-    if (FEED_TYPES.includes(type)){
+    if (type === "to"){
       openTimerForNew(type);
     } else {
       openSheetForNew(type);
@@ -409,15 +414,15 @@ $("#btnConfirm").addEventListener('click', async () => {
   const occurred = fromLocalInputParts(dateStr, timeStr);
   const iso = occurred.toISOString();
   const notes = $("#fNotes").value.trim();
-  let durationSeconds = null;
+  let durationSeconds; // undefined = don't touch existing value on update
   let mlAmount = null;
-  if (editingId && FEED_TYPES.includes(pendingType)){
+  if (editingId && pendingType === "to"){
     const mins = parseFloat($("#fDuration").value);
     durationSeconds = (!isNaN(mins) && mins >= 0) ? Math.round(mins * 60) : null;
   }
-  if (editingId && pendingType === "bi"){
+  if (pendingType === "bi"){
     const ml = parseFloat($("#fMl").value);
-    if (isNaN(ml) || ml < 0){ showToast("Indica la cantidad en ml"); return; }
+    if (isNaN(ml) || ml <= 0){ showToast("Indica la cantidad en ml"); return; }
     mlAmount = Math.round(ml);
   }
 
@@ -425,7 +430,7 @@ $("#btnConfirm").addEventListener('click', async () => {
     await updateEvent(editingId, iso, notes, durationSeconds, mlAmount);
     showToast("Registro actualizado");
   } else {
-    await createEvent(pendingType, iso, notes);
+    await createEvent(pendingType, iso, notes, undefined, mlAmount);
     showToast(`${TYPES[pendingType].label} registrado`);
   }
   closeSheet();
